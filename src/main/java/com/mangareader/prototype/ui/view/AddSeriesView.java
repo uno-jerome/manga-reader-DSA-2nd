@@ -95,11 +95,9 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         setPadding(new Insets(24));
         setAlignment(Pos.TOP_CENTER);
 
-        // Initialize sources with improved implementations
         sources = new ArrayList<>();
         sources.add(new MangaDexSource());
 
-        // Source selector
         sourceSelector = new ComboBox<>();
         sourceSelector.getItems().addAll(sources);
         sourceSelector.setPromptText("Select Source");
@@ -234,7 +232,9 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         paginationBox.setAlignment(Pos.CENTER_LEFT);
         paginationBox.setPadding(new Insets(10, 0, 10, 0));
 
-        // Manga grid
+                    }
+        });
+
         mangaGrid = new GridPane();
         mangaGrid.setHgap(16);
         mangaGrid.setVgap(16);

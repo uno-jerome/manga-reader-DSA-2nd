@@ -56,7 +56,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 
 public class MangaDetailView extends BorderPane implements ThemeManager.ThemeChangeListener {
-    // UI Components
     private final ImageView coverImageView;
     private final Label titleLabel;
     private final Label authorLabel;
@@ -80,11 +79,9 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
     private final ProgressBar readProgressBar;
     private final Label readProgressLabel;
 
-    // Stats display
     private final GridPane statsGrid;
     private final Map<String, Label> statsLabels = new HashMap<>();
 
-    // Data
     private final MangaService mangaService;
     private final LibraryService libraryService;
     private final Consumer<Chapter> onChapterSelectedCallback;
@@ -95,7 +92,7 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
     private final SortedList<Chapter> sortedChapters = new SortedList<>(filteredChapters);
     private final int CHAPTERS_PER_PAGE = 50;
     private int currentChapterPage = 0;
-    private boolean updatingPagination = false; // Flag to prevent recursive pagination updates
+    private boolean updatingPagination = false;
     private final ThemeManager themeManager;
 
     public MangaDetailView() {
@@ -115,15 +112,13 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
         setPadding(new Insets(20));
 
-        // High-quality cover image
         coverImageView = new ImageView();
         coverImageView.setFitWidth(250);
         coverImageView.setFitHeight(350);
         coverImageView.setPreserveRatio(true);
-        coverImageView.setSmooth(true); // High-quality scaling
-        coverImageView.setCache(true); // Performance optimization
+        coverImageView.setSmooth(true);
+        coverImageView.setCache(true);
 
-        // Create a clip for the ImageView to have rounded corners
         Rectangle clip = new Rectangle(250, 350);
         clip.setArcWidth(20);
         clip.setArcHeight(20);
@@ -135,7 +130,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         String placeholderUrl = "https://via.placeholder.com/250x350/f8f9fa/6c757d?text=No+Cover";
         coverImageView.setImage(new Image(placeholderUrl, true));
 
-        // Labels with styling
         titleLabel = new Label();
         titleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-wrap-text: true;");
         titleLabel.setWrapText(true);
@@ -153,26 +147,22 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
         lastUpdatedLabel = new Label();
 
-        // Description Area with better styling
         descriptionArea = new TextArea();
         descriptionArea.setEditable(false);
         descriptionArea.setWrapText(true);
         descriptionArea.setPrefRowCount(8);
 
-        // Genres Pane with improved styling
         genresPane = new FlowPane();
         genresPane.setHgap(8);
         genresPane.setVgap(8);
         genresPane.setPrefWrapLength(600);
         genresPane.setPadding(new Insets(10, 0, 10, 0));
 
-        // Statistics Grid
         statsGrid = new GridPane();
         statsGrid.setHgap(15);
         statsGrid.setVgap(10);
         statsGrid.setPadding(new Insets(15));
 
-        // Initialize stats labels
         String[] statsKeys = { "Rating", "Users", "Follows", "Popularity", "Release Year", "Chapter Count" };
         for (int i = 0; i < statsKeys.length; i++) {
             Label keyLabel = new Label(statsKeys[i] + ":");
@@ -185,7 +175,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
             statsGrid.add(valueLabel, 1, i);
         }
 
-        // Read progress
         readProgressBar = new ProgressBar(0);
         readProgressBar.setPrefWidth(200);
 
@@ -194,7 +183,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         VBox progressBox = new VBox(5, new Label("Reading Progress"), readProgressBar, readProgressLabel);
         progressBox.setPadding(new Insets(15, 0, 15, 0));
 
-        // Enhanced Buttons with icons
         readButton = new Button("Start Reading");
         readButton.setPrefWidth(150);
 
@@ -203,12 +191,11 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
         removeFromLibraryButton = new Button("Remove from Library");
         removeFromLibraryButton.setPrefWidth(150);
-        removeFromLibraryButton.setVisible(false); // Initially hidden
+        removeFromLibraryButton.setVisible(false);
 
         refreshButton = new Button("Refresh");
         refreshButton.setPrefWidth(150);
 
-        // Buttons layout - Put "Remove from Library" next to "Start Reading"
         HBox primaryButtonBox = new HBox(10, readButton, removeFromLibraryButton);
         HBox secondaryButtonBox = new HBox(10, addToLibraryButton, refreshButton);
 
@@ -216,12 +203,10 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         buttonLayout.setAlignment(Pos.CENTER_LEFT);
         buttonLayout.setPadding(new Insets(15, 0, 15, 0));
 
-        // Chapter List Table - DISABLE internal scrolling to prevent conflicts
         chaptersTable = new TableView<>();
         chaptersTable.getStyleClass().add("chapter-table");
         chaptersTable.setMinHeight(400);
 
-        // CRITICAL: Disable TableView's own scrolling to prevent viewport conflicts
         chaptersTable.setRowFactory(tv -> {
             TableRow<Chapter> row = new TableRow<Chapter>() {
                 @Override
@@ -231,7 +216,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                     if (item == null || empty) {
                         setStyle("");
                     } else {
-                        // Theme-aware styling for read/unread chapters
                         setStyle("-fx-background-color: transparent;");
                         String hoverColor = themeManager.isDarkTheme() ? "#3c3c3c" : "#f8f9fa";
                         setOnMouseEntered(e -> setStyle("-fx-background-color: " + hoverColor + ";"));
@@ -249,14 +233,12 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
             return row;
         });
 
-        // Search and Filter Box
         chapterSearchField = new TextField();
         chapterSearchField.setPromptText("Search chapters...");
         chapterSearchField.textProperty().addListener((obs, oldVal, newVal) -> {
             filterChapters(newVal);
         });
 
-        // Sorting dropdown
         sortComboBox = new ComboBox<>();
         sortComboBox.getItems().addAll("Newest First", "Oldest First", "By Volume");
         sortComboBox.setValue("Newest First");
@@ -267,7 +249,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
             }
         });
 
-        // Volume filter
         filterComboBox = new ComboBox<>();
         filterComboBox.setPromptText("Filter by Volume");
         filterComboBox.getItems().addAll("All");
@@ -295,7 +276,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         chapterPagination = new Pagination(1, 0);
         chapterPagination.getStyleClass().add("simple-pagination");
         chapterPagination.currentPageIndexProperty().addListener((obs, oldVal, newVal) -> {
-            // Prevent recursive calls when we're programmatically updating pagination
             if (!updatingPagination) {
                 currentChapterPage = newVal.intValue();
                 updateChapterTable();
@@ -305,7 +285,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         HBox paginationBox = new HBox(10, totalChaptersLabel, chapterPagination);
         paginationBox.setAlignment(Pos.CENTER_LEFT);
 
-        // Set up chapters table
         TableColumn<Chapter, String> chapterColumn = new TableColumn<>("Chapter");
         chapterColumn.setPrefWidth(70);
         chapterColumn.setCellValueFactory(data -> {
@@ -351,10 +330,8 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         chaptersTable.getColumns().add(dateColumn);
         chaptersTable.getColumns().add(statusColumn);
 
-        // Tab pane for different chapter views (list, grid, volume)
         chaptersTabPane = new TabPane();
 
-        // Create List tab with independent scroll management
         BorderPane listContent = new BorderPane(chaptersTable, null, null, chapterPagination, null);
         ScrollPane listScrollPane = new ScrollPane(listContent);
         listScrollPane.setFitToWidth(true);
@@ -366,7 +343,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         Tab listTab = new Tab("List", listScrollPane);
         listTab.setClosable(false);
 
-        // Create Grid tab with independent scroll management
         ScrollPane gridScrollPane = new ScrollPane(createChapterGrid());
         gridScrollPane.setFitToWidth(true);
         gridScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
@@ -381,17 +357,12 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         chaptersTabPane.getTabs().addAll(listTab, gridTab, volumeTab);
         chaptersTabPane.getStyleClass().add("floating-tab-pane");
 
-        // Add tab selection listener to handle independent scroll state management
         chaptersTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
             if (newTab != null && newTab == listTab) {
-                // When switching back to List tab, COMPLETELY RECREATE the list content
                 Platform.runLater(() -> {
                     System.out.println("DEBUG: Switching to List tab - COMPLETELY RECREATING list content");
 
-                    // Reset to first page
                     currentChapterPage = 0;
-
-                    // NUCLEAR OPTION: Recreate the entire list tab content from scratch
                     BorderPane newListContent = new BorderPane(chaptersTable, null, null, chapterPagination, null);
                     ScrollPane newListScrollPane = new ScrollPane(newListContent);
                     newListScrollPane.setFitToWidth(true);
@@ -400,16 +371,12 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                     newListScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
                     newListScrollPane.setStyle("-fx-background-color: transparent;");
 
-                    // Replace the tab content completely
                     listTab.setContent(newListScrollPane);
 
-                    // Clear all table state
                     chaptersTable.setItems(FXCollections.observableArrayList());
                     chaptersTable.refresh();
 
-                    // Give it a moment to settle
                     Platform.runLater(() -> {
-                        // Reset pagination before updating table
                         updatingPagination = true;
                         try {
                             int pageCount = Math.max(1,
@@ -421,7 +388,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                             updatingPagination = false;
                         }
 
-                        // Now update the table with proper data after complete recreation
                         updateChapterTable();
 
                         System.out.println("DEBUG: COMPLETE RECREATION of List tab completed - page 0, total chapters: "
@@ -430,21 +396,16 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                     });
                 });
             } else if (newTab != null && newTab == gridTab) {
-                // When switching to Grid tab, reset its scroll position to prevent
-                // contamination
                 System.out.println("DEBUG: Switching to Grid tab - resetting grid scroll state");
                 Platform.runLater(() -> {
-                    // Reset GRID scroll pane position to top
                     ScrollPane currentGridScrollPane = (ScrollPane) gridTab.getContent();
                     currentGridScrollPane.setVvalue(0);
                     currentGridScrollPane.setHvalue(0);
                     System.out.println("DEBUG: Grid scroll position reset to top");
                 });
             } else if (newTab != null && newTab.getText().equals("Volumes")) {
-                // When switching to Volumes tab, ensure clean state
                 System.out.println("DEBUG: Switching to Volumes tab - ensuring clean state");
                 Platform.runLater(() -> {
-                    // Reset volume tab scroll position if it has a ScrollPane
                     if (newTab.getContent() instanceof ScrollPane scrollPane) {
                         scrollPane.setVvalue(0);
                         scrollPane.setHvalue(0);
@@ -453,7 +414,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
             }
         });
 
-        // Main Layout with better organization
         VBox topInfoLayout = new VBox(10);
 
         VBox titleAuthorBox = new VBox(5);
@@ -479,7 +439,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
         infoGridLayout.getChildren().addAll(detailsBox, statsBox);
 
-        // Chapters header
         Label chaptersHeader = new Label("Chapters");
         chaptersHeader.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
@@ -489,7 +448,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                 chaptersTabPane);
         chaptersBox.setPadding(new Insets(20, 0, 0, 0));
 
-        // Combine all sections into the main layout
         VBox leftPanel = new VBox(20, coverImageView);
         leftPanel.setAlignment(Pos.TOP_CENTER);
 
@@ -501,7 +459,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         HBox mainLayout = new HBox(30, leftPanel, rightPanel);
         mainLayout.setPadding(new Insets(20));
 
-        // Create back button at the very top
         Button backButton = new Button("← Back");
         backButton.setStyle(
                 "-fx-font-size: 14px; " +
@@ -515,22 +472,17 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
             }
         });
 
-        // Create a complete content layout with back button at the very top
         VBox completeLayout = new VBox(15);
         completeLayout.setPadding(new Insets(10, 20, 20, 20));
         completeLayout.getChildren().addAll(backButton, mainLayout);
 
-        // Add to the BorderPane
         setCenter(new ScrollPane(completeLayout));
 
-        // Initial sort order is newest first
         sortChapters("Newest First");
 
-        // Register for theme changes after construction is complete
         themeManager.addThemeChangeListener(this);
     }
 
-    // Create the chapter grid view
     private GridPane createChapterGrid() {
         GridPane grid = new GridPane();
         grid.setHgap(15);
@@ -539,7 +491,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         return grid;
     }
 
-    // Create the volume view with accordion
     private ScrollPane createVolumeView() {
         Accordion accordion = new Accordion();
         accordion.setPadding(new Insets(15));
@@ -548,7 +499,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         return scrollPane;
     }
 
-    // Method to update the chapter grid
     private void updateChapterGrid(GridPane grid, List<Chapter> chapters) {
         grid.getChildren().clear();
         int col = 0;
@@ -560,7 +510,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
             chapterBox.setPadding(new Insets(10));
             chapterBox.setAlignment(Pos.CENTER);
 
-            // Theme-aware styling for chapter cards
             String cardBg = themeManager.isDarkTheme() ? "#3c3c3c" : "white";
             String borderColor = themeManager.isDarkTheme() ? "#555555" : "#dee2e6";
             chapterBox.setStyle(
@@ -577,19 +526,14 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
             String volumeTextColor = themeManager.isDarkTheme() ? "#a0a0a0" : "#666";
             volumeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + volumeTextColor + ";");
 
-            // Read status indicator - check if chapter is actually read
             Circle readStatusIndicator = new Circle(5);
             readStatusIndicator.setFill(Color.LIGHTGRAY);
 
-            // Check if this chapter is read from library service
             boolean isRead = false;
             if (currentManga != null && libraryService.isInLibrary(currentManga.getId())) {
-                // Get the library entry to check if this chapter is read
                 try {
                     Optional<Manga> libraryManga = libraryService.getLibraryManga(currentManga.getId());
                     if (libraryManga.isPresent()) {
-                        // We need to check against the readChapterIds in the library service
-                        // For now, we'll add a method to check if a chapter is read
                         isRead = libraryService.isChapterRead(currentManga.getId(), chapter.getId());
                     }
                 } catch (Exception e) {
@@ -624,7 +568,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         }
     }
 
-    // Method for updating volume-based chapter grid (smaller chapter cards)
     private void updateVolumeChapterGridLayout(GridPane grid, List<Chapter> chapters) {
         grid.getChildren().clear();
         int col = 0;
@@ -641,11 +584,9 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                 }
             });
 
-            // Add tooltip with chapter title
             Tooltip tooltip = new Tooltip(chapter.getTitle());
             Tooltip.install(chapterBtn, tooltip);
 
-            // Add to grid
             grid.add(chapterBtn, col, row);
             GridPane.setHgrow(chapterBtn, Priority.ALWAYS);
             GridPane.setFillWidth(chapterBtn, true);
@@ -658,20 +599,16 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         }
     }
 
-    // Method to update the volume view with accordion panels
     private void updateVolumeView(Accordion accordion, List<Chapter> chapters) {
         accordion.getPanes().clear();
 
-        // Group chapters by volume
         Map<String, List<Chapter>> volumeChapters = chapters.stream()
                 .collect(Collectors.groupingBy(
                         chapter -> chapter.getVolume() != null ? chapter.getVolume() : "No Volume"));
 
-        // Create a pane for each volume with its chapters
         volumeChapters.forEach((volume, volumeChapterList) -> {
             String title = volume.equals("No Volume") ? "Chapters (No Volume)" : "Volume " + volume;
 
-            // Create grid for the chapters in this volume
             GridPane chapterGrid = new GridPane();
             chapterGrid.setHgap(10);
             chapterGrid.setVgap(10);
@@ -679,7 +616,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
             updateVolumeChapterGridLayout(chapterGrid, volumeChapterList);
 
-            // Create titled pane for this volume
             TitledPane volumePane = new TitledPane(title + " (" + volumeChapterList.size() + " chapters)",
                     new ScrollPane(chapterGrid));
 
@@ -687,11 +623,8 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         });
     }
 
-    // Update the chapter table with the current page of chapters
     private void updateChapterTable() {
-        // Prevent concurrent updates that can cause duplicate rows
         Platform.runLater(() -> {
-            // Debug: Check if we're already updating
             if (updatingPagination) {
                 System.out.println("DEBUG: Skipping updateChapterTable - already updating pagination");
                 return;
@@ -704,22 +637,19 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
             int fromIndex = currentChapterPage * CHAPTERS_PER_PAGE;
 
             if (fromIndex >= sortedChapters.size() && !sortedChapters.isEmpty()) {
-                // Reset to first page if current page is out of bounds
                 System.out.println("DEBUG: Page out of bounds, resetting to page 0");
                 currentChapterPage = 0;
                 fromIndex = 0;
             }
 
-            // Update pagination with flag to prevent recursive calls
             updatingPagination = true;
             try {
                 int pageCount = (int) Math.ceil((double) sortedChapters.size() / CHAPTERS_PER_PAGE);
                 if (pageCount == 0) {
-                    pageCount = 1; // At least one page even if empty
+                    pageCount = 1;
                 }
                 chapterPagination.setPageCount(pageCount);
 
-                // Update the current page if it's out of bounds
                 if (currentChapterPage >= pageCount) {
                     currentChapterPage = pageCount - 1;
                 }
@@ -731,47 +661,38 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                 updatingPagination = false;
             }
 
-            chaptersTable.setItems(FXCollections.observableArrayList()); // Replace with empty list
+            chaptersTable.setItems(FXCollections.observableArrayList());
             chaptersTable.refresh();
 
-            // Make variables effectively final for lambda
             final int finalFromIndex = fromIndex;
 
-            // Force multiple refreshes to ensure virtual flow is completely reset
             Platform.runLater(() -> {
                 chaptersTable.refresh();
                 chaptersTable.scrollTo(0);
 
-                // Create a sublist for the current page
                 int toIndex = Math.min(finalFromIndex + CHAPTERS_PER_PAGE, sortedChapters.size());
 
-                // Ensure we don't create an invalid sublist
                 if (finalFromIndex < sortedChapters.size()) {
                     List<Chapter> currentPageChapters = sortedChapters.subList(finalFromIndex, toIndex);
 
-                    // Debug logging
                     System.out.println("DEBUG: Adding " + currentPageChapters.size() + " chapters to table (page "
                             + currentChapterPage + ", fromIndex: " + finalFromIndex + ", toIndex: " + toIndex + ")");
 
-                    // Create completely new ObservableList to avoid any reference issues
                     ObservableList<Chapter> newItems = FXCollections.observableArrayList(currentPageChapters);
                     chaptersTable.setItems(newItems);
 
-                    // Force final refresh
                     Platform.runLater(() -> {
                         chaptersTable.refresh();
                         chaptersTable.scrollTo(0);
                         System.out.println("DEBUG: Final table state - items: " + chaptersTable.getItems().size());
                     });
                 } else {
-                    // No chapters to display
                     System.out.println("DEBUG: No chapters to display for current page");
                 }
             });
         });
     }
 
-    // Filter chapters by search text
     private void filterChapters(String searchText) {
         String lowerCaseSearch = searchText.toLowerCase();
 
@@ -784,22 +705,17 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                     String.valueOf(chapter.getNumber()).contains(lowerCaseSearch);
         };
 
-        // Combine with volume filter
         String volumeFilter = filterComboBox.getValue();
         Predicate<Chapter> volumePredicate = getVolumeFilterPredicate(volumeFilter);
 
         filteredChapters.setPredicate(volumePredicate.and(textPredicate));
 
-        // Reset to first page when filtering
         currentChapterPage = 0;
         updateChapterTable();
     }
 
-    // Filter chapters by volume
     private void filterChaptersByVolume(String volumeFilter) {
         Predicate<Chapter> volumePredicate = getVolumeFilterPredicate(volumeFilter);
-
-        // Combine with text filter
         String searchText = chapterSearchField.getText();
         String lowerCaseSearch = searchText.toLowerCase();
 
@@ -826,13 +742,11 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         } else if (volumeFilter.equals("No Volume")) {
             return chapter -> chapter.getVolume() == null || chapter.getVolume().isEmpty();
         } else {
-            // Extract volume number, e.g. "Volume 1" -> "1"
             String volumeNumber = volumeFilter.replace("Volume ", "").trim();
             return chapter -> chapter.getVolume() != null && chapter.getVolume().equals(volumeNumber);
         }
     }
 
-    // Sort chapters based on selected option
     private void sortChapters(String sortOption) {
         switch (sortOption) {
             case "Newest First":
@@ -843,7 +757,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                 break;
             case "By Volume":
                 sortedChapters.setComparator((c1, c2) -> {
-                    // First compare by volume (null volumes go last)
                     if (c1.getVolume() == null && c2.getVolume() == null) {
                         return Double.compare(c1.getNumber(), c2.getNumber());
                     } else if (c1.getVolume() == null) {
@@ -851,7 +764,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                     } else if (c2.getVolume() == null) {
                         return -1;
                     } else {
-                        // Both have volumes, compare them
                         int volumeComparison = c1.getVolume().compareTo(c2.getVolume());
                         if (volumeComparison == 0) {
                             return Double.compare(c1.getNumber(), c2.getNumber());
@@ -864,33 +776,26 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                 break;
         }
 
-        // Reset to first page when sorting changes
         currentChapterPage = 0;
 
-        // Update table after sorting
         updateChapterTable();
 
-        // Also update the grid and volume views
         Platform.runLater(() -> {
             Tab gridTabForSort = chaptersTabPane.getTabs().get(1);
-            // Check if content is GridPane before casting
             ScrollPane gridScrollPane = (ScrollPane) gridTabForSort.getContent();
             if (gridScrollPane.getContent() instanceof GridPane gridPane) {
                 updateChapterGrid(gridPane, sortedChapters);
             } else {
-                // Content was replaced with loading state, create fresh grid
                 GridPane chapterGrid = createChapterGrid();
                 gridScrollPane.setContent(chapterGrid);
                 updateChapterGrid(chapterGrid, sortedChapters);
             }
 
             Tab volumeTabForSort = chaptersTabPane.getTabs().get(2);
-            // Check if content is Accordion before casting
             ScrollPane volumeScrollPane = (ScrollPane) volumeTabForSort.getContent();
             if (volumeScrollPane.getContent() instanceof Accordion accordion) {
                 updateVolumeView(accordion, sortedChapters);
             } else {
-                // Content was replaced with loading state, create fresh accordion
                 Accordion volumeAccordion = new Accordion();
                 volumeAccordion.setPadding(new Insets(15));
                 volumeScrollPane.setContent(volumeAccordion);
@@ -899,11 +804,9 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         });
     }
 
-    // Load chapters for a manga
     private void loadChapters(String mangaId) {
         chapters.clear();
 
-        // Update UI to show loading state
         Label emptyLabel = new Label("");
         chaptersTable.setPlaceholder(emptyLabel);
 
@@ -918,38 +821,30 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
         chaptersTable.setPlaceholder(loadingBox);
 
-        // Clear other views as well
         Tab gridTabForLoading = chaptersTabPane.getTabs().get(1);
         Label loadingGridLabel = new Label("Loading chapters...");
         loadingGridLabel.setStyle("-fx-font-size: 16px;");
 
-        // Replace with loading message (we'll create fresh components later)
         ((ScrollPane) gridTabForLoading.getContent()).setContent(new StackPane(loadingGridLabel));
 
         Tab volumeTabForLoading = chaptersTabPane.getTabs().get(2);
         Label loadingVolumeLabel = new Label("Loading chapters...");
         loadingVolumeLabel.setStyle("-fx-font-size: 16px;");
 
-        // Replace with loading message (we'll create fresh components later)
         ((ScrollPane) volumeTabForLoading.getContent()).setContent(new StackPane(loadingVolumeLabel));
 
-        // Fetch chapters in a background thread
         new Thread(() -> {
             List<Chapter> fetchedChapters = mangaService.getChapters(mangaId);
             Platform.runLater(() -> {
                 if (fetchedChapters != null && !fetchedChapters.isEmpty()) {
                     chapters.addAll(fetchedChapters);
 
-                    // Update stats
                     statsLabels.get("Chapter Count").setText(String.valueOf(fetchedChapters.size()));
 
-                    // Update the number of chapters label
                     totalChaptersLabel.setText("Total: " + fetchedChapters.size() + " chapters");
 
-                    // Set initial sort order to newest first
                     sortedChapters.setComparator(Comparator.comparing(Chapter::getNumber).reversed());
 
-                    // Update volume filter options
                     filterComboBox.getItems().clear();
                     filterComboBox.getItems().add("All");
                     filterComboBox.getItems().add("No Volume");
@@ -962,25 +857,20 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
                     filterComboBox.setValue("All");
 
-                    // Update the chapter grid - restore original grid first
                     Tab gridTabForFetch = chaptersTabPane.getTabs().get(1);
-                    GridPane chapterGrid = createChapterGrid(); // Create fresh grid
+                    GridPane chapterGrid = createChapterGrid();
                     ((ScrollPane) gridTabForFetch.getContent()).setContent(chapterGrid);
                     updateChapterGrid(chapterGrid, fetchedChapters);
 
-                    // Update the volume view - restore original accordion first
                     Tab volumeTabForFetch = chaptersTabPane.getTabs().get(2);
                     Accordion volumeAccordion = new Accordion();
                     volumeAccordion.setPadding(new Insets(15));
                     ((ScrollPane) volumeTabForFetch.getContent()).setContent(volumeAccordion);
                     updateVolumeView(volumeAccordion, fetchedChapters);
 
-                    // Update total chapter count in library if this manga is in library
                     if (currentManga != null && libraryService.isInLibrary(currentManga.getId())) {
                         libraryService.updateTotalChapters(currentManga.getId(), fetchedChapters.size());
                     }
-
-                    // Get actual reading progress from library
                     int chaptersRead = 0;
                     if (currentManga != null && libraryService.isInLibrary(currentManga.getId())) {
                         Optional<LibraryService.LibraryEntryInfo> entryInfo = libraryService

@@ -54,10 +54,8 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
         this.libraryService = new LibraryServiceImpl();
         this.themeManager = ThemeManager.getInstance();
 
-        // Top bar with search and stats
         HBox topBar = createTopBar();
 
-        // Main content area
         mangaGrid = new GridPane();
         mangaGrid.setHgap(16);
         mangaGrid.setVgap(16);
@@ -66,25 +64,19 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
         scrollPane = new ScrollPane(mangaGrid);
         scrollPane.setFitToWidth(true);
 
-        // Empty state view
         emptyStateContainer = createEmptyStateView();
 
-        // Layout
         setTop(topBar);
         setCenter(scrollPane);
 
-        // Apply initial theme
         updateComponentThemes();
 
-        // Load library content
         loadLibraryContent();
 
-        // Responsive columns
         widthProperty().addListener((obs, oldVal, newVal) -> updateGridColumns());
         scrollPane.viewportBoundsProperty().addListener((obs, oldVal, newVal) -> updateGridColumns());
         updateGridColumns();
 
-        // Register theme listener after all initialization is complete
         this.themeManager.addThemeChangeListener(this);
     }
 

@@ -17,11 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import javafx.scene.image.Image;
 
 /**
- * Image cache utility to prevent reloading covers when theme changes
- * Supports both memory and disk caching for better performance
- * THIS COULD BE MODIFY IF YOU DONT WANT TO CACHE IMAGES (IT IS BETTER TO KEEP
- * THEM FOR UPCOMING PRESENTATION)
- * IN MEMORY OR DISK, BUT IT IS HIGHLY RECOMMENDED TO KEEP IT
+ * Image cache utility to prevent reloading covers when theme changes.
+ * Supports both memory and disk caching for better performance.
  */
 public class ImageCache {
     private static final ImageCache instance = new ImageCache();
@@ -29,7 +26,6 @@ public class ImageCache {
     private final Path cacheDir;
     private final boolean diskCacheEnabled;
 
-    // Default dimensions for manga covers
     private static final double DEFAULT_WIDTH = 180;
     private static final double DEFAULT_HEIGHT = 270;
     private static final boolean DEFAULT_PRESERVE_RATIO = true;
@@ -37,11 +33,9 @@ public class ImageCache {
     private static final boolean DEFAULT_BACKGROUND_LOADING = true;
 
     private ImageCache() {
-        // Initialize disk cache directory
         String projectDir = System.getProperty("user.dir");
         this.cacheDir = Paths.get(projectDir, "cache", "images");
 
-        // Try to create cache directory
         boolean cacheCreated = false;
         try {
             Files.createDirectories(cacheDir);
@@ -73,7 +67,6 @@ public class ImageCache {
             return getPlaceholderImage("No+Cover", width, height);
         }
 
-        // Validate URL format
         if (!isValidImageUrl(url)) {
             System.err.println("Invalid image URL: " + url);
             return getPlaceholderImage("Invalid+URL", width, height);
@@ -162,7 +155,7 @@ public class ImageCache {
 
     private boolean isValidImageUrl(String url) {
         try {
-            URL testUrl = URI.create(url).toURL(); // Use modern URI-based URL creation
+            URL testUrl = URI.create(url).toURL();
             String protocol = testUrl.getProtocol();
             return "http".equals(protocol) || "https".equals(protocol);
         } catch (Exception e) {
@@ -172,26 +165,22 @@ public class ImageCache {
 
     private Image downloadAndCacheImage(String url, Path cachedFile, double width, double height) {
         try {
-            // Download image to cache directory using URI-based URL creation
             URL imageUrl = URI.create(url).toURL();
             try (ReadableByteChannel rbc = Channels.newChannel(imageUrl.openStream());
                     FileOutputStream fos = new FileOutputStream(cachedFile.toFile())) {
                 fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
             }
 
-            // Validate the downloaded file is not corrupted
-            if (Files.size(cachedFile) < 1024) { // Too small to be a valid image
+            if (Files.size(cachedFile) < 1024) {
                 System.err.println("Downloaded file too small, likely corrupted: " + url);
                 Files.deleteIfExists(cachedFile);
                 return null;
             }
 
-            // Load and test the image - using file URI for local file
             String fileUri = cachedFile.toUri().toString();
             Image testImage = new Image(fileUri, width, height, DEFAULT_PRESERVE_RATIO, DEFAULT_SMOOTH,
                     DEFAULT_BACKGROUND_LOADING);
 
-            // Check if image loaded successfully
             if (testImage.isError()) {
                 System.err.println("Downloaded image is corrupted: " + url);
                 Files.deleteIfExists(cachedFile);
@@ -201,7 +190,6 @@ public class ImageCache {
             return testImage;
         } catch (Exception e) {
             System.err.println("Error downloading and caching image: " + e.getMessage());
-            // Clean up corrupted cache file
             try {
                 Files.deleteIfExists(cachedFile);
             } catch (IOException cleanupError) {
@@ -220,11 +208,9 @@ public class ImageCache {
             String filename = getCacheFileName(url);
             Path cachedFile = cacheDir.resolve(filename);
 
-            // Check if file exists in disk cache
             if (Files.exists(cachedFile)) {
                 System.out.println("Loading image from disk cache: " + filename);
 
-                // Validate cached file size
                 if (Files.size(cachedFile) < 1024) {
                     System.err.println("Cached file too small, removing: " + filename);
                     Files.deleteIfExists(cachedFile);
@@ -232,12 +218,10 @@ public class ImageCache {
                 }
 
                 try {
-                    // Use file URI for local file
                     String fileUri = cachedFile.toUri().toString();
                     Image cachedImage = new Image(fileUri, width, height, DEFAULT_PRESERVE_RATIO, DEFAULT_SMOOTH,
                             DEFAULT_BACKGROUND_LOADING);
 
-                    // Check if cached image is corrupted
                     if (cachedImage.isError()) {
                         System.err.println("Cached image is corrupted, re-downloading: " + filename);
                         Files.deleteIfExists(cachedFile);
@@ -253,7 +237,6 @@ public class ImageCache {
                     return newImage != null ? newImage : loadImage(url, width, height);
                 }
             } else {
-                // Download and cache to disk
                 System.out.println("Downloading and caching image: " + url);
                 Image image = downloadAndCacheImage(url, cachedFile, width, height);
                 return image != null ? image : loadImage(url, width, height);
@@ -268,25 +251,20 @@ public class ImageCache {
         try {
             System.out.println("Loading and caching image: " + url);
 
-            // Create image with better error handling and size hints
             Image image = new Image(url, width, height, DEFAULT_PRESERVE_RATIO, DEFAULT_SMOOTH,
                     DEFAULT_BACKGROUND_LOADING);
 
-            // Add error listener to handle corruption issues
             image.exceptionProperty().addListener((obs, oldEx, newEx) -> {
                 if (newEx != null) {
                     System.err.println("Image loading exception for " + url + ": " + newEx.getMessage());
-                    // Remove from cache if corrupted
                     String cacheKey = url + "_" + width + "x" + height;
                     memoryCache.remove(cacheKey);
                 }
             });
 
-            // Add error property listener for JPEG corruption
             image.errorProperty().addListener((obs, wasError, isError) -> {
                 if (isError) {
                     System.err.println("Image error detected for " + url + " - likely corrupted JPEG data");
-                    // Remove from cache if corrupted
                     String cacheKey = url + "_" + width + "x" + height;
                     memoryCache.remove(cacheKey);
                 }
@@ -310,7 +288,6 @@ public class ImageCache {
             }
             return sb.toString() + ".jpg";
         } catch (NoSuchAlgorithmException e) {
-            // Fallback to simple hash
             return String.valueOf(url.hashCode()) + ".jpg";
         }
     }

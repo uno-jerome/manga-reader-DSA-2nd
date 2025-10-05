@@ -50,7 +50,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         this.themeManager = ThemeManager.getInstance();
         this.mangaToAdd = manga;
 
-        // Debug output for manga data
         System.out.println("Creating AddSeriesModal with manga data:");
         System.out.println("  ID: " + manga.getId());
         System.out.println("  Title: " + manga.getTitle());
@@ -58,22 +57,19 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         System.out.println("  Artist: " + manga.getArtist());
 
         setTitle("View Series");
-        setHeaderText(null); // No default header text
+        setHeaderText(null);
 
-        // Setup dialog pane
         DialogPane dialogPane = getDialogPane();
         dialogPane.getStyleClass().add("add-series-dialog");
         dialogPane.setPrefWidth(900);
         dialogPane.setPrefHeight(700);
 
-        // Apply current theme stylesheet without leaking this
         String cssPath = themeManager.getCurrentTheme().getCssPath();
         try {
             String cssUrl = getClass().getResource(cssPath).toExternalForm();
             dialogPane.getStylesheets().add(cssUrl);
         } catch (Exception e) {
             System.err.println("Error loading theme CSS for modal: " + e.getMessage());
-            // Fallback to light theme
             try {
                 String fallbackUrl = getClass().getResource("/styles/main.css").toExternalForm();
                 dialogPane.getStylesheets().add(fallbackUrl);
@@ -82,17 +78,13 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
             }
         }
 
-        // --- UI Components --- //
-
-        // Cover Image with high quality settings
         coverImageView = new ImageView();
         coverImageView.setFitWidth(200);
         coverImageView.setFitHeight(300);
         coverImageView.setPreserveRatio(true);
-        coverImageView.setSmooth(true); // Enable smooth scaling for better quality
-        coverImageView.setCache(true); // Cache the image for better performance
+        coverImageView.setSmooth(true);
+        coverImageView.setCache(true);
 
-        // Always set a placeholder first
         String placeholderUrl = "https://via.placeholder.com/200x300/f8f9fa/6c757d?text=No+Cover";
         Image placeholderImage = new Image(placeholderUrl, true);
 
