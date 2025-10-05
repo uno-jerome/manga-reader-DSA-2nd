@@ -102,7 +102,7 @@ public class SearchParams {
     }
 
     public void setLimit(int limit) {
-        this.limit = Math.max(1, limit); // Limit can't be less than 1
+        this.limit = Math.max(1, limit); 
     }
 
     public Map<String, String> getAdditionalParams() {

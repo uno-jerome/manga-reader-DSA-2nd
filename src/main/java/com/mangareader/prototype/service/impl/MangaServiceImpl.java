@@ -67,7 +67,6 @@ public abstract class MangaServiceImpl implements MangaService {
     public Optional<Manga> getMangaById(String id) {
         Manga manga = library.get(id);
         if (manga == null) {
-            // Try to fetch from source if not in library
             return mangaSource.getMangaDetails(id);
         }
         return Optional.of(manga);
@@ -79,7 +78,6 @@ public abstract class MangaServiceImpl implements MangaService {
         if (manga != null && !manga.getChapters().isEmpty()) {
             return manga.getChapters();
         }
-        // Fetch chapters from source if not in library
         return mangaSource.getChapters(mangaId);
     }
 
@@ -145,23 +143,19 @@ public abstract class MangaServiceImpl implements MangaService {
 
     @Override
     public Optional<Manga> getMangaDetails(String mangaId) {
-        // First try to get from library
         Manga manga = library.get(mangaId);
         if (manga != null) {
             return Optional.of(manga);
         }
-        // Otherwise fetch from source
         return mangaSource.getMangaDetails(mangaId);
     }
 
     @Override
     public String getCoverUrl(String mangaId) {
-        // First check if manga is in library and has a cover URL
         Manga manga = library.get(mangaId);
         if (manga != null && manga.getCoverUrl() != null && !manga.getCoverUrl().isEmpty()) {
             return manga.getCoverUrl();
         }
-        // Otherwise fetch from source
         return mangaSource.getCoverUrl(mangaId);
     }
 }

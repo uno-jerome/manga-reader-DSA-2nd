@@ -1,6 +1,7 @@
 package com.mangareader.prototype.ui.view;
 
 import com.mangareader.prototype.ui.component.ThemeManager;
+import com.mangareader.prototype.util.ImageCache;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -269,7 +270,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         searchBox.setAlignment(Pos.CENTER_LEFT);
         searchBox.setPadding(new Insets(0, 0, 10, 0));
 
-        // Chapter count and pagination
         totalChaptersLabel = new Label("Total: 0 chapters");
         totalChaptersLabel.setStyle("-fx-font-size: 14px;");
 
@@ -730,12 +730,10 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
         filteredChapters.setPredicate(volumePredicate.and(textPredicate));
 
-        // Reset to first page when filtering
         currentChapterPage = 0;
         updateChapterTable();
     }
 
-    // Get predicate for volume filtering
     private Predicate<Chapter> getVolumeFilterPredicate(String volumeFilter) {
         if (volumeFilter == null || volumeFilter.isEmpty() || volumeFilter.equals("All")) {
             return chapter -> true;
@@ -884,89 +882,71 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                     readProgressBar.setProgress(progress);
                     readProgressLabel.setText(chaptersRead + " / " + chapters.size() + " chapters read");
 
-                    // Update the chapter table pagination
                     updateChapterTable();
 
-                    // Update reading button text based on chapters loaded
                     updateReadingButtonText();
 
                 } else {
-                    // No chapters found
                     totalChaptersLabel.setText("Total: 0 chapters");
                     statsLabels.get("Chapter Count").setText("0");
 
-                    // Update reading progress
                     readProgressBar.setProgress(0);
                     readProgressLabel.setText("0 / 0 chapters read");
 
-                    // Update the tab views
+                    Label noChaptersTableLabel = new Label("No chapters available");
+                    noChaptersTableLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
+                    chaptersTable.setPlaceholder(noChaptersTableLabel);
+
                     Tab gridTabForEmpty = chaptersTabPane.getTabs().get(1);
-                    Label noChaptersGridLabel = new Label("No chapters found.");
+                    Label noChaptersGridLabel = new Label("No chapters available");
                     noChaptersGridLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
                     ((ScrollPane) gridTabForEmpty.getContent()).setContent(new StackPane(noChaptersGridLabel));
 
                     Tab volumeTabForEmpty = chaptersTabPane.getTabs().get(2);
-                    Label noChaptersVolumeLabel = new Label("No chapters found.");
+                    Label noChaptersVolumeLabel = new Label("No chapters available");
                     noChaptersVolumeLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
                     ((ScrollPane) volumeTabForEmpty.getContent()).setContent(new StackPane(noChaptersVolumeLabel));
+
+                    updateReadingButtonText();
                 }
             });
         }).start();
     }
 
-    // Load image with error handling and fallback
     private void loadCoverImage(Manga manga) {
         if (manga.getCoverUrl() == null || manga.getCoverUrl().isEmpty()) {
             return;
         }
 
         try {
-            // Use high-quality settings for cover image loading
-            Image image = new Image(manga.getCoverUrl(), 250, 350, true, true, true);
+            ImageCache imageCache = ImageCache.getInstance();
+            Image image = imageCache.getImage(manga.getCoverUrl());
 
             image.errorProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal) {
-                    System.err.println("Error loading cover image (likely corrupted JPEG): " + manga.getCoverUrl());
-                    // Error loading image, use placeholder
-                    String placeholderUrl = "https://via.placeholder.com/250x350/f8f9fa/6c757d?text=No+Cover";
-                    Image placeholderImage = new Image(placeholderUrl, true);
-
-                    // Add error handling for placeholder too
-                    placeholderImage.errorProperty().addListener((pObs, pOldVal, pNewVal) -> {
-                        if (pNewVal) {
-                            System.err.println("Error loading placeholder image, using fallback");
-                            Platform.runLater(() -> coverImageView.setImage(null));
-                        }
-                    });
-
-                    coverImageView.setImage(placeholderImage);
+                    System.err.println("Error loading cover image: " + manga.getCoverUrl());
+                    Image placeholderImage = imageCache.getPlaceholderImage("No+Cover");
+                    Platform.runLater(() -> coverImageView.setImage(placeholderImage));
                 }
             });
 
-            // Add exception listener for better error handling
             image.exceptionProperty().addListener((obs, oldEx, newEx) -> {
                 if (newEx != null) {
-                    System.err.println(
-                            "Exception loading cover image: " + newEx.getMessage() + " for: " + manga.getCoverUrl());
-                    String placeholderUrl = "https://via.placeholder.com/250x350/f8f9fa/6c757d?text=Load+Error";
-                    coverImageView.setImage(new Image(placeholderUrl, true));
+                    System.err.println("Exception loading cover image: " + newEx.getMessage());
+                    Image placeholderImage = imageCache.getPlaceholderImage("Error");
+                    Platform.runLater(() -> coverImageView.setImage(placeholderImage));
                 }
             });
 
-            image.progressProperty().addListener((obs, oldProgress, newProgress) -> {
-                if (newProgress.doubleValue() >= 1.0) {
-                    // Image loaded successfully
-                    Platform.runLater(() -> coverImageView.setImage(image));
-                }
-            });
+            coverImageView.setImage(image);
         } catch (Exception e) {
-            // Error loading image, use placeholder
-            String placeholderUrl = "https://via.placeholder.com/250x350/f8f9fa/6c757d?text=No+Cover";
-            coverImageView.setImage(new Image(placeholderUrl, true));
+            System.err.println("Error in loadCoverImage: " + e.getMessage());
+            ImageCache imageCache = ImageCache.getInstance();
+            Image placeholderImage = imageCache.getPlaceholderImage("Error");
+            coverImageView.setImage(placeholderImage);
         }
     }
 
-    // Display manga details
     public void displayManga(Manga manga) {
         this.currentManga = manga;
         titleLabel.setText(manga.getTitle());
@@ -982,15 +962,12 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
         descriptionArea.setText(manga.getDescription());
 
-        // Load cover image
         loadCoverImage(manga);
 
-        // Update genres
         genresPane.getChildren().clear();
         if (manga.getGenres() != null) {
             for (String genre : manga.getGenres()) {
                 Label genreLabel = new Label(genre);
-                // Apply theme-aware styling for genre labels
                 String genreBg = themeManager.isDarkTheme() ? "#4a4a4a" : "#e7f3ff";
                 String genreText = themeManager.isDarkTheme() ? "#87ceeb" : "#0066cc";
                 genreLabel.setStyle(
@@ -1003,10 +980,8 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
             }
         }
 
-        // Update "Add to Library" button based on library status
         updateAddToLibraryButton(manga);
 
-        // Update statistics with sample data
         statsLabels.get("Rating").setText("4.8/5");
         statsLabels.get("Users").setText("12,345");
         statsLabels.get("Follows").setText("5,678");
@@ -1014,29 +989,22 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         statsLabels.get("Release Year").setText("2020");
         statsLabels.get("Chapter Count").setText("Loading...");
 
-        // Load chapters
         loadChapters(manga.getId());
 
-        // Update reading button text based on reading progress
         updateReadingButtonText();
 
-        // Button actions
         readButton.setOnAction(e -> {
             if (!chapters.isEmpty()) {
-                // Check if any chapters have been read to determine button text
                 boolean hasReadChapters = false;
                 if (libraryService.isInLibrary(manga.getId())) {
                     hasReadChapters = chapters.stream()
                             .anyMatch(ch -> libraryService.isChapterRead(manga.getId(), ch.getId()));
                 }
 
-                // Update button text based on reading progress
                 readButton.setText(hasReadChapters ? "Continue Reading" : "Start Reading");
 
-                // Find the appropriate chapter to read
                 Chapter chapterToRead;
                 if (hasReadChapters) {
-                    // Find the first unread chapter, or last chapter if all are read
                     chapterToRead = chapters.stream()
                             .filter(ch -> !libraryService.isChapterRead(manga.getId(), ch.getId()))
                             .min(Comparator.comparing(Chapter::getNumber))
@@ -1044,7 +1012,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                                     .max(Comparator.comparing(Chapter::getNumber))
                                     .orElse(chapters.get(0)));
                 } else {
-                    // Start from the first chapter
                     chapterToRead = chapters.stream()
                             .min(Comparator.comparing(Chapter::getNumber))
                             .orElse(chapters.get(0));
@@ -1057,12 +1024,8 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         });
     }
 
-    /**
-     * Update the "Add to Library" button text and style based on library status
-     */
     private void updateAddToLibraryButton(Manga manga) {
         if (libraryService.isInLibrary(manga.getId())) {
-            // Already in library - show "In Library" and show remove button
             addToLibraryButton.setText("In Library");
             addToLibraryButton.setDisable(true);
             addToLibraryButton.setStyle(
@@ -1073,7 +1036,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                             "-fx-background-radius: 5; " +
                             "-fx-opacity: 0.8;");
 
-            // Show and setup remove button
             removeFromLibraryButton.setVisible(true);
             removeFromLibraryButton.setDisable(false);
             removeFromLibraryButton.setStyle(
@@ -1083,24 +1045,18 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                             "-fx-padding: 10 20; " +
                             "-fx-background-radius: 5;");
 
-            // Set up remove button action
             removeFromLibraryButton.setOnAction(e -> {
-                // Remove from library
                 boolean success = libraryService.removeFromLibrary(manga.getId());
                 if (success) {
-                    // Update UI to reflect removal
                     updateAddToLibraryButton(manga);
 
-                    // Update progress indicators
                     readProgressBar.setProgress(0);
                     readProgressLabel.setText("0 / 0 chapters read");
 
-                    // Update reading button text
                     updateReadingButtonText();
                 }
             });
         } else {
-            // Not in library - show "Add to Library" button and hide remove button
             addToLibraryButton.setText("Add to Library");
             addToLibraryButton.setDisable(false);
             addToLibraryButton.setStyle(
@@ -1110,7 +1066,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                             "-fx-padding: 10 20; " +
                             "-fx-background-radius: 5;");
 
-            // Hide remove button when not in library
             removeFromLibraryButton.setVisible(false);
         }
     }
@@ -1122,7 +1077,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         filterComboBox.setValue("All");
     }
 
-    // Clear all manga information
     @SuppressWarnings("unused")
     private void clear() {
         titleLabel.setText("");
@@ -1136,12 +1090,10 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         genresPane.getChildren().clear();
         chapters.clear();
 
-        // Clear stats
         for (Label label : statsLabels.values()) {
             label.setText("--");
         }
 
-        // Clear reading progress
         readProgressBar.setProgress(0);
         readProgressLabel.setText("0 / 0 chapters read");
 
@@ -1161,14 +1113,9 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         return refreshButton;
     }
 
-    /**
-     * Apply the current theme to all components
-     */
     private void applyTheme() {
-        // Apply main background
         setStyle("-fx-background-color: " + themeManager.getBackgroundColor() + ";");
 
-        // Apply theme to stats grid
         String statsGridBg = themeManager.isDarkTheme() ? "#3c3c3c" : "#f0f0f0";
         String borderColor = themeManager.getBorderColor();
         statsGrid.setStyle(
@@ -1177,7 +1124,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                         "-fx-border-radius: 5; " +
                         "-fx-background-radius: 5;");
 
-        // Apply theme to description area
         String descBg = themeManager.isDarkTheme() ? "#3c3c3c" : "#f8f9fa";
         descriptionArea.setStyle(
                 "-fx-control-inner-background: " + descBg + "; " +
@@ -1188,7 +1134,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                         "-fx-focus-color: transparent; " +
                         "-fx-faint-focus-color: transparent;");
 
-        // Apply theme to buttons
         readButton.getStyleClass().removeAll("primary", "success", "warning");
         readButton.getStyleClass().add("primary");
 
@@ -1196,7 +1141,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
         refreshButton.getStyleClass().removeAll("primary", "success", "warning");
 
-        // Apply theme to status and language labels
         String labelBg = themeManager.isDarkTheme() ? "#4a4a4a" : "#e7f3ff";
         String labelText = themeManager.isDarkTheme() ? "#87ceeb" : "#0066cc";
         statusLabel.setStyle(
@@ -1206,14 +1150,11 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                 "-fx-font-size: 14px; -fx-padding: 5 10; -fx-background-radius: 15; " +
                         "-fx-background-color: " + labelBg + "; -fx-text-fill: " + labelText + ";");
 
-        // Apply theme to last updated label
         lastUpdatedLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: " + themeManager.getTextColor() + ";");
 
-        // Apply theme to progress bar
         String progressColor = themeManager.isDarkTheme() ? "#28a745" : "#28a745";
         readProgressBar.setStyle("-fx-accent: " + progressColor + ";");
 
-        // Update existing genre labels
         updateGenreLabels();
     }
 
@@ -1238,7 +1179,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         Platform.runLater(() -> {
             applyTheme();
 
-            // Update any existing chapter grid cards
             Tab gridTab = chaptersTabPane.getTabs().get(1);
             ScrollPane gridScrollPane = (ScrollPane) gridTab.getContent();
             if (gridScrollPane.getContent() instanceof GridPane gridPane) {
@@ -1247,10 +1187,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         });
     }
 
-    /**
-     * Refresh the reading progress display
-     * Call this when returning from reading to update the UI
-     */
     public void refreshReadingProgress() {
         if (currentManga != null && libraryService.isInLibrary(currentManga.getId())) {
             Optional<LibraryService.LibraryEntryInfo> entryInfo = libraryService
@@ -1264,21 +1200,17 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                 readProgressBar.setProgress(progress);
                 readProgressLabel.setText(chaptersRead + " / " + totalChapters + " chapters read");
 
-                // Update chapter status indicators in all views
                 Platform.runLater(() -> {
-                    // Refresh table view
                     if (chaptersTable != null) {
                         chaptersTable.refresh();
                     }
 
-                    // Refresh grid view
                     Tab gridTab = chaptersTabPane.getTabs().get(1);
                     ScrollPane gridScrollPane = (ScrollPane) gridTab.getContent();
                     if (gridScrollPane.getContent() instanceof GridPane gridPane) {
                         updateChapterGrid(gridPane, chapters);
                     }
 
-                    // Refresh volume view
                     Tab volumeTab = chaptersTabPane.getTabs().get(2);
                     ScrollPane volumeScrollPane = (ScrollPane) volumeTab.getContent();
                     if (volumeScrollPane.getContent() instanceof Accordion accordion) {
@@ -1289,9 +1221,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         }
     }
 
-    /**
-     * Update the reading button text based on reading progress
-     */
     private void updateReadingButtonText() {
         if (currentManga != null && !chapters.isEmpty() && libraryService.isInLibrary(currentManga.getId())) {
             boolean hasReadChapters = chapters.stream()

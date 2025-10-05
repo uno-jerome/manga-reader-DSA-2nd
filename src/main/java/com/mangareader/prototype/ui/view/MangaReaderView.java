@@ -13,6 +13,7 @@ import com.mangareader.prototype.service.LibraryService;
 import com.mangareader.prototype.service.MangaService;
 import com.mangareader.prototype.service.impl.DefaultMangaServiceImpl;
 import com.mangareader.prototype.service.impl.LibraryServiceImpl;
+import com.mangareader.prototype.ui.component.ThemeManager;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -50,6 +51,7 @@ public class MangaReaderView extends BorderPane {
     private final Button modeToggleButton;
     private final Slider zoomSlider;
     private final HBox controlsBox;
+    private final ThemeManager themeManager;
 
     private final MangaService mangaService;
     private final LibraryService libraryService;
@@ -75,6 +77,7 @@ public class MangaReaderView extends BorderPane {
         this.mangaService = new DefaultMangaServiceImpl();
         this.libraryService = new LibraryServiceImpl();
         this.executorService = Executors.newSingleThreadExecutor();
+        this.themeManager = ThemeManager.getInstance();
 
         imageContainer = new StackPane();
         imageContainer.setStyle("-fx-background-color: #2b2b2b;");
@@ -192,8 +195,8 @@ public class MangaReaderView extends BorderPane {
             }
         });
 
-        Label zoomLabel = new Label("Zoom:");
-        zoomLabel.setStyle("-fx-text-fill: white;");
+    Label zoomLabel = new Label("Zoom:");
+    zoomLabel.setStyle("-fx-text-fill: white;");
 
         controlsBox = new HBox(15);
         controlsBox.setAlignment(Pos.CENTER);
@@ -242,6 +245,52 @@ public class MangaReaderView extends BorderPane {
                 Platform.runLater(this::updateWebtoonImageSizes);
             }
         });
+
+        themeManager.addThemeChangeListener(theme -> Platform.runLater(this::applyTheme));
+        applyTheme();
+    }
+
+    private void applyTheme() {
+        boolean isDarkTheme = themeManager.isDarkTheme();
+        String backgroundColor = isDarkTheme ? "#2b2b2b" : "#f5f5f5";
+        String containerBackground = isDarkTheme ? "#2b2b2b" : "#ffffff";
+        String textColor = isDarkTheme ? "#f0f0f0" : "#1f1f1f";
+        String borderColor = isDarkTheme ? "#444444" : "#cccccc";
+        String controlsBackground = isDarkTheme ? "rgba(0, 0, 0, 0.9)" : "rgba(255, 255, 255, 0.9)";
+
+        setStyle(String.format("-fx-background-color: %s;", backgroundColor));
+        imageContainer.setStyle(String.format("-fx-background-color: %s;", containerBackground));
+        webtoonContainer.setStyle(String.format("-fx-background-color: %s;", containerBackground));
+        webtoonScrollPane.setStyle(String.format("-fx-background-color: %s;", containerBackground));
+
+        pageInfoLabel.setStyle(String.format("-fx-text-fill: %s; -fx-font-size: 14px;", textColor));
+
+        String backButtonBg = isDarkTheme ? "#6c757d" : "#dee2e6";
+        String backButtonText = isDarkTheme ? "#ffffff" : "#1f1f1f";
+        backButton.setStyle(String.format(
+                "-fx-background-color: %s; -fx-text-fill: %s; -fx-font-size: 12px; -fx-padding: 8 12;",
+                backButtonBg, backButtonText));
+
+        String modeToggleBg = isDarkTheme ? "#28a745" : "#198754";
+        modeToggleButton.setStyle(String.format(
+                "-fx-background-color: %s; -fx-text-fill: #ffffff; -fx-font-size: 12px; -fx-padding: 8 12;",
+                modeToggleBg));
+
+        String chapterButtonBg = isDarkTheme ? "#007bff" : "#0d6efd";
+        prevChapterButton.setStyle(String.format(
+                "-fx-background-color: %s; -fx-text-fill: #ffffff; -fx-font-size: 11px; -fx-padding: 6 10;",
+                chapterButtonBg));
+        nextChapterButton.setStyle(String.format(
+                "-fx-background-color: %s; -fx-text-fill: #ffffff; -fx-font-size: 11px; -fx-padding: 6 10;",
+                chapterButtonBg));
+
+        controlsBox.setStyle(String.format(
+                "-fx-background-color: %s; -fx-border-color: %s; -fx-border-width: 1 0 0 0;",
+                controlsBackground, borderColor));
+
+    controlsBox.getChildren().stream()
+        .filter(node -> node instanceof Label)
+        .forEach(node -> node.setStyle(String.format("-fx-text-fill: %s;", textColor)));
     }
 
     private void toggleReadingMode() {

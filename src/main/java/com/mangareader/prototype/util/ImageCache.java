@@ -17,8 +17,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import javafx.scene.image.Image;
 
 /**
- * Image cache utility to prevent reloading covers when theme changes.
- * Supports both memory and disk caching for better performance.
+ * ImageCache provides two-level caching for manga cover images:
+ * 
+ * 1. Memory Cache (ConcurrentHashMap): Fast access, cleared on app restart
+ *    - Thread-safe for concurrent image loading
+ *    - Key: image URL, Value: JavaFX Image object
+ * 
+ * 2. Disk Cache (./cache/images/): Persistent across app restarts
+ *    - Images saved with MD5-hashed filenames to avoid collisions
+ *    - Validates file size and integrity before serving
+ * 
+ * Why we need this:
+ * - Theme changes would reload all covers without cache
+ * - MangaDex API rate limiting (5 requests/second)
+ * - Improved UX with instant cover display
+ * 
+ * Thread-Safety: Uses ConcurrentHashMap for safe parallel image loading
  */
 public class ImageCache {
     private static final ImageCache instance = new ImageCache();
@@ -26,8 +40,8 @@ public class ImageCache {
     private final Path cacheDir;
     private final boolean diskCacheEnabled;
 
-    private static final double DEFAULT_WIDTH = 180;
-    private static final double DEFAULT_HEIGHT = 270;
+    private static final double DEFAULT_WIDTH = 0;
+    private static final double DEFAULT_HEIGHT = 0;
     private static final boolean DEFAULT_PRESERVE_RATIO = true;
     private static final boolean DEFAULT_SMOOTH = true;
     private static final boolean DEFAULT_BACKGROUND_LOADING = true;
@@ -72,7 +86,7 @@ public class ImageCache {
             return getPlaceholderImage("Invalid+URL", width, height);
         }
 
-        String cacheKey = url + "_" + width + "x" + height;
+        String cacheKey = url;
         return memoryCache.computeIfAbsent(cacheKey, k -> loadImageWithDiskCache(url, width, height));
     }
 
@@ -178,7 +192,7 @@ public class ImageCache {
             }
 
             String fileUri = cachedFile.toUri().toString();
-            Image testImage = new Image(fileUri, width, height, DEFAULT_PRESERVE_RATIO, DEFAULT_SMOOTH,
+            Image testImage = new Image(fileUri, 0, 0, DEFAULT_PRESERVE_RATIO, DEFAULT_SMOOTH,
                     DEFAULT_BACKGROUND_LOADING);
 
             if (testImage.isError()) {
@@ -199,6 +213,14 @@ public class ImageCache {
         }
     }
 
+    /**
+     * Two-level cache lookup strategy:
+     * 1. Check memory cache (instant)
+     * 2. Check disk cache (fast)
+     * 3. Download from network (slow)
+     * 
+     * This method implements the disk cache layer.
+     */
     private Image loadImageWithDiskCache(String url, double width, double height) {
         if (!diskCacheEnabled) {
             return loadImage(url, width, height);
@@ -219,7 +241,7 @@ public class ImageCache {
 
                 try {
                     String fileUri = cachedFile.toUri().toString();
-                    Image cachedImage = new Image(fileUri, width, height, DEFAULT_PRESERVE_RATIO, DEFAULT_SMOOTH,
+                    Image cachedImage = new Image(fileUri, 0, 0, DEFAULT_PRESERVE_RATIO, DEFAULT_SMOOTH,
                             DEFAULT_BACKGROUND_LOADING);
 
                     if (cachedImage.isError()) {
@@ -251,13 +273,13 @@ public class ImageCache {
         try {
             System.out.println("Loading and caching image: " + url);
 
-            Image image = new Image(url, width, height, DEFAULT_PRESERVE_RATIO, DEFAULT_SMOOTH,
+            Image image = new Image(url, 0, 0, DEFAULT_PRESERVE_RATIO, DEFAULT_SMOOTH,
                     DEFAULT_BACKGROUND_LOADING);
 
             image.exceptionProperty().addListener((obs, oldEx, newEx) -> {
                 if (newEx != null) {
                     System.err.println("Image loading exception for " + url + ": " + newEx.getMessage());
-                    String cacheKey = url + "_" + width + "x" + height;
+                    String cacheKey = url;
                     memoryCache.remove(cacheKey);
                 }
             });
@@ -265,7 +287,7 @@ public class ImageCache {
             image.errorProperty().addListener((obs, wasError, isError) -> {
                 if (isError) {
                     System.err.println("Image error detected for " + url + " - likely corrupted JPEG data");
-                    String cacheKey = url + "_" + width + "x" + height;
+                    String cacheKey = url;
                     memoryCache.remove(cacheKey);
                 }
             });
@@ -278,6 +300,18 @@ public class ImageCache {
         }
     }
 
+    /**
+     * Generates a safe, unique filename for caching using MD5 hash.
+     * 
+     * Why MD5?
+     * - URLs can contain invalid filename characters (/,:,?, etc.)
+     * - Long URLs exceed filesystem path limits
+     * - MD5 provides collision-resistant unique identifiers
+     * 
+     * Example:
+     * URL: "https://mangadex.org/covers/abc123/file.jpg"
+     * Cached as: "5d41402abc4b2a76b9719d911017c592.jpg"
+     */
     private String getCacheFileName(String url) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");

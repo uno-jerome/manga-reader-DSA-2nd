@@ -88,11 +88,9 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         String placeholderUrl = "https://via.placeholder.com/200x300/f8f9fa/6c757d?text=No+Cover";
         Image placeholderImage = new Image(placeholderUrl, true);
 
-        // Add error handling even for placeholder images
         placeholderImage.errorProperty().addListener((obs, wasError, isError) -> {
             if (isError) {
                 System.err.println("Error loading placeholder image, using fallback");
-                // Use a simple fallback if even placeholder fails
                 Platform.runLater(() -> {
                     try {
                         Image fallbackImage = new Image(
@@ -107,17 +105,14 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
 
         coverImageView.setImage(placeholderImage);
 
-        // Load cover image if available
         loadCoverImage(manga);
 
-        // Title Field
         titleField = new TextField(manga.getTitle());
         titleField.setPromptText("Title");
         titleField.setPrefColumnCount(30);
         titleField.setEditable(false); // Make title read-only
         titleField.setFocusTraversable(false);
 
-        // Description Area
         descriptionArea = new TextArea(manga.getDescription());
         descriptionArea.setPromptText("Description");
         descriptionArea.setWrapText(true);
@@ -126,7 +121,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         descriptionArea.setEditable(false); // Make description read-only
         descriptionArea.setFocusTraversable(false);
 
-        // Authors Field
         String authorText = manga.getAuthor() != null ? manga.getAuthor() : "";
         authorsField = new TextField(authorText);
         authorsField.setPromptText("Author(s)");
@@ -135,7 +129,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         authorsField.setFocusTraversable(false);
         System.out.println("Setting author field text: " + authorText);
 
-        // Artists Field
         String artistText = manga.getArtist() != null ? manga.getArtist() : "";
         artistsField = new TextField(artistText);
         artistsField.setPromptText("Artist(s)");
@@ -144,11 +137,9 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         artistsField.setFocusTraversable(false);
         System.out.println("Setting artist field text: " + artistText);
 
-        // Tags FlowPane (for displaying chips) - Auto-adjusting layout
         tagsFlowPane = new FlowPane(5, 5); // Reduced spacing for tighter layout
         tagsFlowPane.setPadding(new Insets(5)); // Reduced padding
 
-        // Remove fixed height constraints to let content determine size
         tagsFlowPane.setPrefWrapLength(400);
         tagsFlowPane.setMaxWidth(Double.MAX_VALUE);
         if (manga.getGenres() != null) {
@@ -156,23 +147,19 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         }
         tagsFlowPane.setDisable(true); // Make tags field non-editable
 
-        // Wrap tagsFlowPane in a ScrollPane with dynamic height
         ScrollPane tagsScrollPane = new ScrollPane(tagsFlowPane);
         tagsScrollPane.setFitToWidth(true);
-        // Calculate height based on tag content (approximately 30px per row + padding)
         double estimatedHeight = calculateTagsHeight();
         tagsScrollPane.setPrefHeight(Math.max(40, Math.min(estimatedHeight, 120))); // Min 40px, max 120px
         tagsScrollPane.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
         tagsScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         tagsScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-        // Initialize detailsGrid before adding components
         GridPane detailsGrid = new GridPane();
         detailsGrid.setHgap(15);
         detailsGrid.setVgap(20);
         detailsGrid.setAlignment(Pos.TOP_LEFT);
 
-        // Add Tag Field
         addTagField = new TextField();
         addTagField.setPromptText("Add Tags (comma-separated)");
         addTagField.setOnAction(event -> {
@@ -184,39 +171,32 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         });
         addTagField.setVisible(false); // Hide add tag field when tags are read-only
 
-        // Language Field (read-only, no dropdown needed)
         languageField = new TextField(manga.getLanguage() != null ? manga.getLanguage() : "English");
         languageField.setPromptText("Language");
         languageField.setEditable(false);
         languageField.setFocusTraversable(false);
         languageField.setAlignment(Pos.CENTER_LEFT); // Better text alignment
 
-        // Status Field (read-only, no dropdown needed)
         statusField = new TextField(manga.getStatus() != null ? manga.getStatus() : "Ongoing");
         statusField.setPromptText("Status");
         statusField.setEditable(false);
         statusField.setFocusTraversable(false);
         statusField.setAlignment(Pos.CENTER_LEFT); // Better text alignment
 
-        // --- Layout --- //
         GridPane contentGrid = new GridPane();
         contentGrid.setHgap(40);
         contentGrid.setVgap(15);
         contentGrid.setPadding(new Insets(30, 40, 30, 40));
         contentGrid.setAlignment(Pos.CENTER);
 
-        // Left side: Cover Image and URL
         VBox leftColumn = new VBox(20);
         leftColumn.setAlignment(Pos.TOP_CENTER);
 
-        // Cover image container with title
         VBox coverContainer = new VBox(10);
         coverContainer.setAlignment(Pos.CENTER);
         Label coverLabel = new Label("Cover Image");
         coverContainer.getChildren().addAll(coverLabel, coverImageView);
 
-        // Create coverUrlField as a class-level field so it can be updated from image
-        // loading methods
         coverUrlField = new TextField(manga.getCoverUrl() != null ? manga.getCoverUrl() : "");
         coverUrlField.setEditable(false);
         coverUrlField.setFocusTraversable(false);
@@ -226,7 +206,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         leftColumn.setPrefWidth(250);
         leftColumn.setMaxWidth(250);
 
-        // Right side: Details fields
         Label titleLabel = new Label("Title");
         Label descLabel = new Label("Description");
         Label authorLabel = new Label("Author(s)");
@@ -265,12 +244,10 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
 
         dialogPane.setContent(contentGrid);
 
-        // --- Buttons --- //
         ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         ButtonType addSeriesButtonType = new ButtonType("View Series", ButtonBar.ButtonData.APPLY);
         dialogPane.getButtonTypes().addAll(cancelButtonType, addSeriesButtonType);
 
-        // Button actions
         setResultConverter(dialogButton -> {
             if (dialogButton == addSeriesButtonType) {
                 updateMangaObject();
@@ -280,7 +257,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
             return null;
         });
 
-        // Initialize theme styling after all components are created
         initializeTheme();
 
         updateTagChipsTheme();
@@ -301,7 +277,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                         "-fx-border-width: 1; -fx-border-radius: 18;",
                 chipBg, chipText, chipBorder));
 
-        // Remove close button for read-only tags
         HBox tagChip = new HBox(5, tagLabel);
         tagChip.setAlignment(Pos.CENTER_LEFT);
         tagChip.getStyleClass().add("tag-chip-container");
@@ -309,33 +284,26 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
     }
 
     private void updateMangaObject() {
-        // All fields are read-only - data comes from MangaDex source
         System.out.println("Manga object preserved - all data from MangaDex source");
     }
 
     public Optional<Manga> showAndAwaitResult() {
-        // Try to get full manga details before showing the dialog
         if (mangaToAdd != null && mangaToAdd.getId() != null && !mangaToAdd.getId().isEmpty()) {
-            // Check if we need to fetch author/artist data
             if ((mangaToAdd.getAuthor() == null || mangaToAdd.getAuthor().isEmpty()) ||
                     (mangaToAdd.getArtist() == null || mangaToAdd.getArtist().isEmpty())) {
 
                 System.out.println("Fetching complete manga details before showing dialog");
                 try {
-                    // Try to get full details synchronously to ensure data is available when dialog
-                    // opens
                     Optional<Manga> fullManga = mangaService.getMangaDetails(mangaToAdd.getId());
                     if (fullManga.isPresent()) {
                         Manga completeData = fullManga.get();
 
-                        // Update author field if needed
                         if (completeData.getAuthor() != null && !completeData.getAuthor().isEmpty()) {
                             mangaToAdd.setAuthor(completeData.getAuthor());
                             authorsField.setText(completeData.getAuthor());
                             System.out.println("Pre-dialog: Updated author to " + completeData.getAuthor());
                         }
 
-                        // Update artist field if needed
                         if (completeData.getArtist() != null && !completeData.getArtist().isEmpty()) {
                             mangaToAdd.setArtist(completeData.getArtist());
                             artistsField.setText(completeData.getArtist());
@@ -348,10 +316,7 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
             }
         }
 
-        // Show the dialog and return the result
         Optional<Manga> result = showAndWait();
-        // Only return the result if it's present (i.e., user clicked "Add Series")
-        // If result is empty, it means user cancelled or closed the dialog
         return result;
     }
 
@@ -363,10 +328,8 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
      */
     private void loadCoverImage(Manga manga) {
         String placeholderUrl = "https://via.placeholder.com/200x300/f8f9fa/6c757d?text=No+Cover";
-        // Always set placeholder first
         coverImageView.setImage(new Image(placeholderUrl, true));
 
-        // Check if there's a valid cover URL
         if (manga.getCoverUrl() == null || manga.getCoverUrl().isEmpty()) {
             System.out.println("No cover URL found, fetching from source");
             tryFallbackCoverUrl(manga, placeholderUrl);
@@ -377,7 +340,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         try {
             Image coverImg = new Image(manga.getCoverUrl(), true);
 
-            // Handle load errors
             coverImg.exceptionProperty().addListener((obs, oldEx, newEx) -> {
                 if (newEx != null) {
                     System.err.println("Error loading cover image: " + newEx.getMessage());
@@ -385,19 +347,16 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                 }
             });
 
-            // Handle image error
             coverImg.errorProperty().addListener((obs, wasError, isError) -> {
                 if (isError) {
                     System.err.println("Image error loading cover");
                     tryFallbackCoverUrl(manga, placeholderUrl);
                 } else if (!isError && coverImg.getProgress() == 1.0) {
-                    // Image successfully loaded
                     coverImageView.setImage(coverImg);
                     System.out.println("Cover image successfully loaded");
                 }
             });
 
-            // Add progress listener to set the image when fully loaded
             coverImg.progressProperty().addListener((obs, oldProgress, newProgress) -> {
                 if (newProgress.doubleValue() == 1.0 && !coverImg.isError()) {
                     coverImageView.setImage(coverImg);
@@ -418,30 +377,24 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
      * @param placeholderUrl URL to use if fallback also fails
      */
     private void tryFallbackCoverUrl(Manga manga, String placeholderUrl) {
-        // Try to get the cover URL directly from the source
         if (manga.getId() != null && !manga.getId().isEmpty()) {
             System.out.println("Trying to fetch fallback cover URL for manga ID: " + manga.getId());
             new Thread(() -> {
                 try {
-                    // First try to get full manga details, which should include cover and
-                    // author/artist info
                     mangaService.getMangaDetails(manga.getId()).ifPresentOrElse(
                             fullManga -> {
                                 String newCoverUrl = null;
 
-                                // Update cover URL if available
                                 if (fullManga.getCoverUrl() != null && !fullManga.getCoverUrl().isEmpty()) {
                                     newCoverUrl = fullManga.getCoverUrl();
                                     manga.setCoverUrl(newCoverUrl);
                                     System.out.println("Retrieved cover URL from full manga details: " + newCoverUrl);
                                 }
 
-                                // Update author if available
                                 if (fullManga.getAuthor() != null && !fullManga.getAuthor().isEmpty()) {
                                     String author = fullManga.getAuthor();
                                     manga.setAuthor(author);
                                     System.out.println("Retrieved author from full manga details: " + author);
-                                    // Update the author field on the UI thread
                                     javafx.application.Platform.runLater(() -> {
                                         if (authorsField != null) {
                                             authorsField.setText(author);
@@ -449,12 +402,10 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                                     });
                                 }
 
-                                // Update artist if available
                                 if (fullManga.getArtist() != null && !fullManga.getArtist().isEmpty()) {
                                     String artist = fullManga.getArtist();
                                     manga.setArtist(artist);
                                     System.out.println("Retrieved artist from full manga details: " + artist);
-                                    // Update the artist field on the UI thread
                                     javafx.application.Platform.runLater(() -> {
                                         if (artistsField != null) {
                                             artistsField.setText(artist);
@@ -462,18 +413,15 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                                     });
                                 }
 
-                                // Update the cover URL field and load image if we have a new cover URL
                                 if (newCoverUrl != null) {
                                     final String finalCoverUrl = newCoverUrl;
 
-                                    // Update the cover URL field on the UI thread
                                     javafx.application.Platform.runLater(() -> {
                                         if (coverUrlField != null) {
                                             coverUrlField.setText(finalCoverUrl);
                                         }
                                     });
 
-                                    // Load the new image on UI thread
                                     javafx.application.Platform.runLater(() -> {
                                         try {
                                             Image newCoverImg = new Image(finalCoverUrl, true);
@@ -501,7 +449,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                                     });
                                 }
                             },
-                            // If no details available, try direct cover URL method
                             () -> fallbackToDirectCoverUrl(manga, placeholderUrl));
                 } catch (Exception e) {
                     System.err.println("Error in fallback cover process: " + e.getMessage());
@@ -510,7 +457,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                 }
             }).start();
         } else {
-            // No manga ID to get cover, use placeholder
             coverImageView.setImage(new Image(placeholderUrl, true));
         }
     }
@@ -528,14 +474,12 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                 manga.setCoverUrl(directCoverUrl);
                 System.out.println("Retrieved direct cover URL: " + directCoverUrl);
 
-                // Update the cover URL field on the UI thread
                 javafx.application.Platform.runLater(() -> {
                     if (coverUrlField != null) {
                         coverUrlField.setText(directCoverUrl);
                     }
                 });
 
-                // Load the new image on UI thread
                 javafx.application.Platform.runLater(() -> {
                     try {
                         Image directCoverImg = new Image(directCoverUrl, true);
@@ -558,7 +502,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                     }
                 });
             } else {
-                // If still no cover, use placeholder
                 javafx.application.Platform
                         .runLater(() -> coverImageView.setImage(new Image(placeholderUrl, true)));
             }
@@ -580,7 +523,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
             dialogPane.getStylesheets().add(cssUrl);
         } catch (Exception e) {
             System.err.println("Error loading theme CSS for modal: " + e.getMessage());
-            // Fallback to light theme
             try {
                 String fallbackUrl = getClass().getResource("/styles/main.css").toExternalForm();
                 dialogPane.getStylesheets().add(fallbackUrl);
@@ -596,12 +538,10 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
     private void applyThemeStyles() {
         boolean isDark = themeManager.isDarkTheme();
 
-        // Update dialog pane background
         DialogPane dialogPane = getDialogPane();
         String dialogBg = isDark ? "#2b2b2b" : "#ffffff";
         dialogPane.setStyle("-fx-background-color: " + dialogBg + ";");
 
-        // Update cover image view
         String coverBg = isDark ? "#3c3c3c" : "#f8f9fa";
         String coverBorder = isDark ? "#5a5a5a" : "#dee2e6";
         coverImageView.setStyle(String.format(
@@ -610,7 +550,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);",
                 coverBg, coverBorder));
 
-        // Read-only field styling
         String readOnlyBg = isDark ? "#3c3c3c" : "#f8f9fa";
         String readOnlyBorder = isDark ? "#5a5a5a" : "#dee2e6";
         String readOnlyText = isDark ? "#b0b0b0" : "#495057";
@@ -625,7 +564,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                         "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 12;",
                 readOnlyBg, readOnlyBorder, readOnlyText));
 
-        // Author and artist fields with better styling
         authorsField.setStyle(String.format(
                 "-fx-background-color: %s; -fx-border-color: %s; -fx-text-fill: %s; " +
                         "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 12;",
@@ -636,7 +574,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                         "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 12;",
                 readOnlyBg, readOnlyBorder, readOnlyText));
 
-        // Language and status fields with modern styling and proper alignment
         languageField.setStyle(String.format(
                 "-fx-background-color: %s; -fx-border-color: %s; -fx-text-fill: %s; " +
                         "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 12; -fx-alignment: center-left;",
@@ -647,16 +584,13 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                         "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 12; -fx-alignment: center-left;",
                 readOnlyBg, readOnlyBorder, readOnlyText));
 
-        // Update cover URL field with modern styling
         coverUrlField.setStyle(String.format(
                 "-fx-background-color: %s; -fx-border-color: %s; -fx-text-fill: %s; " +
                         "-fx-font-size: 11px; -fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 6 10;",
                 readOnlyBg, readOnlyBorder, readOnlyText));
 
-        // Update labels
         updateLabelsTheme();
 
-        // Update tag chips
         updateTagChipsTheme();
     }
 
@@ -667,7 +601,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         String textColor = themeManager.getTextColor();
         String primaryColor = themeManager.isDarkTheme() ? "#0096c9" : "#007bff";
 
-        // Find and update all labels in the dialog
         DialogPane dialogPane = getDialogPane();
         updateLabelsInNode(dialogPane, textColor, primaryColor);
     }
@@ -678,7 +611,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
     private void updateLabelsInNode(javafx.scene.Node node, String textColor, String primaryColor) {
         if (node instanceof Label) {
             Label label = (Label) node;
-            // Use consistent styling for all labels
             label.setStyle(String.format("-fx-font-weight: bold; -fx-text-fill: %s;", textColor));
         } else if (node instanceof javafx.scene.Parent) {
             javafx.scene.Parent parent = (javafx.scene.Parent) node;
@@ -717,9 +649,7 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
     @Override
     public void onThemeChanged(ThemeManager.Theme newTheme) {
         Platform.runLater(() -> {
-            // Update dialog stylesheet
             applyCurrentTheme(getDialogPane());
-            // Update component styles
             applyThemeStyles();
         });
     }
@@ -728,7 +658,6 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
      * Initialize the dialog with current theme and apply styles
      */
     private void initializeTheme() {
-        // Register for theme changes
         themeManager.addThemeChangeListener(this);
 
         Platform.runLater(() -> applyThemeStyles());
@@ -743,13 +672,10 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
             return 40; // Minimum height for empty state
         }
 
-        // Estimate: each tag chip is ~25px tall, ~80px wide on average
-        // Container is ~400px wide, so roughly 4-5 tags per row
         int tagCount = mangaToAdd.getGenres().size();
         int tagsPerRow = 4; // Conservative estimate
         int estimatedRows = Math.max(1, (tagCount + tagsPerRow - 1) / tagsPerRow); // Ceiling division
 
-        // Each row: 25px tag height + 5px gap + padding
         return (estimatedRows * 30) + 20; // 20px for container padding
     }
 }

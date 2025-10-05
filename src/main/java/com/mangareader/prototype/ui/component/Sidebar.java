@@ -67,7 +67,6 @@ public class Sidebar extends VBox implements ThemeManager.ThemeChangeListener {
     private TreeView<String> createNavigationTree() {
         TreeItem<String> root = new TreeItem<>("Navigation");
 
-        // Add navigation items
         root.getChildren().addAll(
                 new TreeItem<>("Library"),
                 new TreeItem<>("Add Series"),

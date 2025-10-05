@@ -50,12 +50,10 @@ public class MangaDexSource implements MangaSource {
         List<Manga> results = new ArrayList<>();
         try {
             String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8.toString());
-            // Add includes[] parameter for author and artist relationships
             String url = String.format(
                     "%s/manga?title=%s&limit=20&includes[]=cover_art&includes[]=author&includes[]=artist", BASE_URL,
                     encodedQuery);
 
-            // Add content rating filter if NSFW is not included
             if (!includeNsfw) {
                 url += "&contentRating[]=safe&contentRating[]=suggestive";
             }
@@ -103,13 +101,11 @@ public class MangaDexSource implements MangaSource {
             StringBuilder urlBuilder = new StringBuilder(
                     String.format("%s/manga?includes[]=cover_art&includes[]=author&includes[]=artist", BASE_URL));
 
-            // Add query if provided
             if (params.getQuery() != null && !params.getQuery().isEmpty()) {
                 String encodedQuery = URLEncoder.encode(params.getQuery(), StandardCharsets.UTF_8.toString());
                 urlBuilder.append("&title=").append(encodedQuery);
             }
 
-            // Add content rating filter
             if (!params.isIncludeNsfw()) {
                 urlBuilder.append("&contentRating[]=safe&contentRating[]=suggestive");
             } else {
@@ -117,7 +113,6 @@ public class MangaDexSource implements MangaSource {
                         "&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&contentRating[]=pornographic");
             }
 
-            // Add genre filters
             if (!params.getIncludedGenres().isEmpty()) {
                 for (String genre : params.getIncludedGenres()) {
                     String genreId = getGenreIdByName(genre);
@@ -127,7 +122,6 @@ public class MangaDexSource implements MangaSource {
                 }
             }
 
-            // Add excluded genre filters
             if (!params.getExcludedGenres().isEmpty()) {
                 for (String genre : params.getExcludedGenres()) {
                     String genreId = getGenreIdByName(genre);
@@ -137,16 +131,13 @@ public class MangaDexSource implements MangaSource {
                 }
             }
 
-            // Add status filter
             if (params.getStatus() != null && !params.getStatus().isEmpty()) {
                 urlBuilder.append("&status[]=").append(params.getStatus());
             }
 
-            // Add pagination
             urlBuilder.append("&limit=").append(params.getLimit());
             urlBuilder.append("&offset=").append((params.getPage() - 1) * params.getLimit());
 
-            // Add any additional parameters
             for (String key : params.getAdditionalParams().keySet()) {
                 String value = params.getAdditionalParams().get(key);
                 urlBuilder.append("&").append(key).append("=").append(value);
@@ -169,7 +160,6 @@ public class MangaDexSource implements MangaSource {
             JsonNode root = objectMapper.readTree(response);
             JsonNode data = root.get("data");
 
-            // Parse pagination info
             if (root.has("total")) {
                 int totalResults = root.get("total").asInt();
                 result.setTotalResults(totalResults);
@@ -184,7 +174,6 @@ public class MangaDexSource implements MangaSource {
             result.setCurrentPage(params.getPage());
             result.updatePaginationInfo();
 
-            // Parse results
             List<Manga> mangas = new ArrayList<>();
             if (data.isArray()) {
                 for (JsonNode mangaNode : data) {
@@ -202,7 +191,6 @@ public class MangaDexSource implements MangaSource {
 
     @Override
     public List<String> getAvailableGenres() {
-        // Return only genres that we have UUID mappings for
         return Arrays.asList(
                 "Action", "Adventure", "Comedy", "Drama", "Fantasy",
                 "Horror", "Mystery", "Psychological", "Romance",
@@ -213,14 +201,11 @@ public class MangaDexSource implements MangaSource {
 
     @Override
     public List<String> getAvailableStatuses() {
-        // Return MangaDex status options
         return Arrays.asList(
                 "ongoing", "completed", "hiatus", "cancelled");
     }
 
-    // Helper method to convert genre name to MangaDex genre UUID
     private String getGenreIdByName(String genreName) { // These are the actual UUID-based tag IDs from MangaDex API
-        // Reference: https://api.mangadex.org/manga/tag
         switch (genreName.toLowerCase()) {
             case "action":
                 return "391b0423-d847-456f-aff0-8b0cfc03066b";
@@ -278,7 +263,6 @@ public class MangaDexSource implements MangaSource {
     @Override
     public Optional<Manga> getMangaDetails(String mangaId) {
         try {
-            // Add includes[] parameters to ensure author and artist data is fetched
             String url = String.format("%s/manga/%s?includes[]=cover_art&includes[]=author&includes[]=artist", BASE_URL,
                     mangaId);
             System.out.println("Getting manga details from URL: " + url);
@@ -311,7 +295,6 @@ public class MangaDexSource implements MangaSource {
     public List<Chapter> getChapters(String mangaId) {
         List<Chapter> chapters = new ArrayList<>();
         try {
-            // First get manga details to determine reading format
             String mangaReadingFormat = "normal"; // default
             Optional<Manga> mangaDetails = getMangaDetails(mangaId);
             if (mangaDetails.isPresent() && mangaDetails.get().getReadingFormat() != null) {
@@ -337,9 +320,7 @@ public class MangaDexSource implements MangaSource {
             if (data.isArray()) {
                 for (JsonNode chapterNode : data) {
                     Chapter chapter = parseChapterFromJson(chapterNode);
-                    // Set the manga ID since we know it from the URL parameter
                     chapter.setMangaId(mangaId);
-                    // Inherit reading format from manga
                     chapter.setReadingFormat(mangaReadingFormat);
                     chapters.add(chapter);
                 }
@@ -376,7 +357,6 @@ public class MangaDexSource implements MangaSource {
             String response = httpClient.execute(request, responseHandler);
             JsonNode root = objectMapper.readTree(response);
 
-            // Check if the response has the expected structure
             JsonNode resultNode = root.get("result");
             if (resultNode == null || !"ok".equals(resultNode.asText())) {
                 System.err.println(
@@ -384,7 +364,6 @@ public class MangaDexSource implements MangaSource {
                 return pages;
             }
 
-            // Get baseUrl directly from root
             JsonNode baseUrlNode = root.get("baseUrl");
             if (baseUrlNode == null) {
                 System.err.println("No 'baseUrl' found in response");
@@ -393,7 +372,6 @@ public class MangaDexSource implements MangaSource {
             String baseUrl = baseUrlNode.asText();
             System.out.println("Base URL: " + baseUrl);
 
-            // Get chapter data directly from root
             JsonNode chapter = root.get("chapter");
             if (chapter == null) {
                 System.err.println("No 'chapter' node found in response");
@@ -458,7 +436,6 @@ public class MangaDexSource implements MangaSource {
                                 return String.format("%s/%s/%s", COVER_BASE_URL, mangaId, fileName);
                             }
                         }
-                        // Fallback to old method if attributes aren't available
                         String coverId = rel.get("id").asText();
                         return String.format("%s/%s/%s.jpg", COVER_BASE_URL, mangaId, coverId);
                     }
@@ -474,17 +451,13 @@ public class MangaDexSource implements MangaSource {
         Manga manga = new Manga();
         JsonNode attributes = node.path("attributes");
         manga.setId(node.path("id").asText());
-        // Title
         manga.setTitle(attributes.path("title").path("en").asText());
-        // Description
         manga.setDescription(attributes.path("description").path("en").asText());
-        // Status
         manga.setStatus(attributes.path("status").asText());
         String updatedAt = attributes.path("updatedAt").asText("");
         if (!updatedAt.isEmpty()) {
             manga.setLastUpdated(LocalDateTime.parse(updatedAt, DateTimeFormatter.ISO_DATE_TIME));
         }
-        // Genres
         List<String> genres = new ArrayList<>();
         JsonNode tags = attributes.path("tags");
         if (tags.isArray()) {
@@ -495,9 +468,7 @@ public class MangaDexSource implements MangaSource {
             }
         }
         manga.setGenres(genres);
-        // Language
         manga.setLanguage(attributes.path("originalLanguage").asText("en"));
-        // --- Authors/Artists ---
         StringBuilder authors = new StringBuilder();
         StringBuilder artists = new StringBuilder();
         JsonNode relationships = node.path("relationships");
@@ -522,13 +493,11 @@ public class MangaDexSource implements MangaSource {
                         System.out.println("Found artist: " + attr.get("name").asText());
                     }
                 }
-                // Cover
                 if (rel != null && "cover_art".equals(rel.path("type").asText())) {
                     JsonNode attrNode = rel.path("attributes");
                     JsonNode fileNameNode = attrNode.path("fileName");
                     if (!fileNameNode.isMissingNode() && !fileNameNode.isNull()) {
                         String coverFileName = fileNameNode.asText();
-                        // Make sure we're using the correct URL format with the file extension
                         String constructedUrl = String.format("%s/%s/%s", COVER_BASE_URL, manga.getId(), coverFileName);
                         manga.setCoverUrl(constructedUrl);
                         System.out.println("Set cover URL: " + constructedUrl);
@@ -538,7 +507,6 @@ public class MangaDexSource implements MangaSource {
         }
         manga.setAuthor(authors.toString());
         manga.setArtist(artists.toString());
-        // Fallback for cover
         if (manga.getCoverUrl() == null)
             manga.setCoverUrl("");
         return manga;
@@ -548,14 +516,11 @@ public class MangaDexSource implements MangaSource {
         Chapter chapter = new Chapter();
         JsonNode attributes = node.get("attributes");
 
-        // Set ID safely
         if (node.has("id")) {
             chapter.setId(node.get("id").asText());
         }
 
-        // Set MangaID with null check
         if (attributes != null) {
-            // Set MangaID with null check
             if (attributes.has("mangaId")) {
                 JsonNode mangaIdNode = attributes.get("mangaId");
                 if (mangaIdNode != null && !mangaIdNode.isNull()) {
@@ -563,7 +528,6 @@ public class MangaDexSource implements MangaSource {
                 }
             }
 
-            // Set Title with null check
             if (attributes.has("title")) {
                 JsonNode titleNode = attributes.get("title");
                 if (titleNode != null && !titleNode.isNull()) {
@@ -575,7 +539,6 @@ public class MangaDexSource implements MangaSource {
                 chapter.setTitle(""); // Default empty title
             }
 
-            // Set Chapter Number with null check
             if (attributes.has("chapter")) {
                 JsonNode chapterNode = attributes.get("chapter");
                 if (chapterNode != null && !chapterNode.isNull()) {
@@ -592,7 +555,6 @@ public class MangaDexSource implements MangaSource {
                 chapter.setNumber(0.0); // Default to 0
             }
 
-            // Set Volume with null check
             if (attributes.has("volume")) {
                 JsonNode volumeNode = attributes.get("volume");
                 if (volumeNode != null && !volumeNode.isNull()) {
@@ -600,7 +562,6 @@ public class MangaDexSource implements MangaSource {
                 }
             }
 
-            // Set Release Date with null check
             if (attributes.has("publishAt")) {
                 JsonNode publishAtNode = attributes.get("publishAt");
                 if (publishAtNode != null && !publishAtNode.isNull()) {

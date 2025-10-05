@@ -15,6 +15,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 public class SettingsView extends StackPane implements ThemeManager.ThemeChangeListener {
     private final ThemeManager themeManager;
@@ -231,6 +232,15 @@ public class SettingsView extends StackPane implements ThemeManager.ThemeChangeL
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+            
+            alert.initOwner(this.getScene().getWindow());
+            
+            alert.setOnShowing(event -> {
+                Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+                stage.sizeToScene();
+                stage.centerOnScreen();
+            });
+            
             alert.showAndWait();
         });
     }

@@ -37,7 +37,6 @@ public class LibraryServiceImpl implements LibraryService {
                 .registerModule(new JavaTimeModule())
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
-        // Use project directory instead of user home
         String projectDir = System.getProperty("user.dir");
         this.dataDir = Paths.get(projectDir, "data");
         this.libraryFile = dataDir.resolve("library.json");
@@ -49,7 +48,6 @@ public class LibraryServiceImpl implements LibraryService {
         try {
             Files.createDirectories(dataDir);
 
-            // Only load if file exists, otherwise start with empty library
             if (Files.exists(libraryFile)) {
                 loadLibrary();
                 System.out.println("Loaded " + library.size() + " manga from library");
@@ -101,7 +99,6 @@ public class LibraryServiceImpl implements LibraryService {
             return false;
         }
 
-        // Set added date
         manga.setLastUpdated(LocalDateTime.now());
 
         LibraryEntry entry = new LibraryEntry(manga, LocalDateTime.now());
@@ -208,7 +205,6 @@ public class LibraryServiceImpl implements LibraryService {
             entry.setCurrentChapterTotalPages(totalPages);
             entry.setLastRead(LocalDateTime.now());
 
-            // Update reading status if this is the first time reading
             if ("Plan to Read".equals(entry.getReadingStatus())) {
                 entry.setReadingStatus("Reading");
             }
@@ -238,12 +234,10 @@ public class LibraryServiceImpl implements LibraryService {
             entry.markChapterAsRead(chapterId);
             entry.setLastRead(LocalDateTime.now());
 
-            // Update reading status
             if ("Plan to Read".equals(entry.getReadingStatus())) {
                 entry.setReadingStatus("Reading");
             }
 
-            // Check if all chapters are read
             if (entry.getTotalChapters() > 0 && entry.getChaptersRead() >= entry.getTotalChapters()) {
                 entry.setReadingStatus("Completed");
             }
@@ -298,14 +292,12 @@ public class LibraryServiceImpl implements LibraryService {
         private int totalChapters;
         private String readingStatus; // "Reading", "Completed", "Plan to Read", "On Hold", "Dropped"
 
-        // Detailed reading position tracking
         private String currentChapterId;
         private int currentPageNumber;
         private int currentChapterTotalPages;
         private List<String> readChapterIds; // Track which chapters have been fully read
 
         public LibraryEntry() {
-            // Default constructor for JSON deserialization
             this.readChapterIds = new ArrayList<>();
         }
 
@@ -320,7 +312,6 @@ public class LibraryServiceImpl implements LibraryService {
             this.readChapterIds = new ArrayList<>();
         }
 
-        // Getters and setters
         public Manga getManga() {
             return manga;
         }
@@ -369,7 +360,6 @@ public class LibraryServiceImpl implements LibraryService {
             this.readingStatus = readingStatus;
         }
 
-        // New getters and setters for detailed reading position
         public String getCurrentChapterId() {
             return currentChapterId;
         }
@@ -402,7 +392,6 @@ public class LibraryServiceImpl implements LibraryService {
             this.readChapterIds = readChapterIds != null ? readChapterIds : new ArrayList<>();
         }
 
-        // Helper methods
         public boolean isChapterRead(String chapterId) {
             return readChapterIds != null && readChapterIds.contains(chapterId);
         }

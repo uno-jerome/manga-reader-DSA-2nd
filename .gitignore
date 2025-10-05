@@ -26,6 +26,11 @@ config/
 *.temp
 *.log
 
+# Python files
+*.py
+*.pyc
+__pycache__/
+
 # Maven wrapper
 !.mvn/wrapper/maven-wrapper.jar
 .github/

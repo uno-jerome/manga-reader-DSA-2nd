@@ -27,6 +27,19 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 
+/**
+ * LibraryView displays the user's personal manga collection in a responsive grid layout.
+ * 
+ * Key Features:
+ * - Displays manga covers with reading progress
+ * - Live search/filter functionality
+ * - Responsive grid that adapts to window size (3-8 columns)
+ * - Real-time theme support (dark/light mode)
+ * - Empty state when no manga in library
+ * 
+ * This view is read-only - users navigate to AddSeriesView to add new manga.
+ * Click on any manga card to open the MangaDetailView.
+ */
 public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeListener {
     private final LibraryService libraryService;
     private final ThemeManager themeManager;
@@ -39,6 +52,8 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
     private Consumer<Manga> onMangaSelectedCallback;
     private Runnable onAddSeriesCallback;
 
+    // Responsive grid configuration
+    // The grid automatically adjusts columns based on available width
     private int columns = 5;
     private final int CARD_WIDTH = 180;
     private final int CARD_HEIGHT = 270;
@@ -129,7 +144,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                         "-fx-background-radius: 8;");
         browseButton.setOnAction(e -> showAddSeriesView());
 
-        // Add a "Clear Library" button for testing (can be removed in production)
         Button clearButton = new Button("Clear Library (Testing)");
         clearButton.setStyle(
                 "-fx-background-color: #dc3545; " +
@@ -207,24 +221,29 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
         }
     }
 
+    /**
+     * Creates an interactive manga cover card with:
+     * - Cover image with rounded corners
+     * - Title and reading status
+     * - Reading progress (X/Y chapters)
+     * - Click handler to open detail view
+     * - Hover effects for better UX
+     */
     private VBox createMangaCover(Manga manga) {
-        // High-quality cover image
         ImageView imageView = new ImageView();
         imageView.setFitWidth(CARD_WIDTH);
         imageView.setFitHeight(CARD_HEIGHT);
         imageView.setPreserveRatio(false);
-        imageView.setSmooth(true); // High-quality scaling
-        imageView.setCache(true); // Performance optimization
+        imageView.setSmooth(true); 
+        imageView.setCache(true);
 
         StackPane imageContainer = new StackPane(imageView);
 
-        // Add rounded clipping for modern look
         Rectangle clip = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
         clip.setArcWidth(12);
         clip.setArcHeight(12);
         imageContainer.setClip(clip);
 
-        // Container styling
         String imageBackgroundColor = themeManager.getSecondaryBackgroundColor();
         String borderColor = themeManager.getBorderColor();
         imageContainer.setStyle(String.format(
@@ -236,7 +255,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 2);",
                 imageBackgroundColor, borderColor));
 
-        // Load cover image using cache
         try {
             ImageCache imageCache = ImageCache.getInstance();
             if (manga.getCoverUrl() != null && !manga.getCoverUrl().isEmpty()) {
@@ -252,7 +270,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
             imageView.setImage(errorImage);
         }
 
-        // Theme colors
         String textColor = themeManager.getTextColor();
         String secondaryTextColor = themeManager.isDarkTheme() ? "#b0b0b0" : "#666666";
 
@@ -261,16 +278,16 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
         titleLabel.setMaxWidth(CARD_WIDTH);
         titleLabel.setStyle(String.format("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: %s;", textColor));
 
-        // Progress information with actual data from library service
+        // Default values shown when no reading progress exists
         String progressText = "Progress: 0/0 chapters";
         String readingStatusText = "Plan to Read";
 
+        // Fetch actual reading progress from library service
+        // This includes: chapters read, total chapters, current chapter, and status
         try {
-            // Get reading progress from library service
             double progress = libraryService.getReadingProgress(manga.getId());
             Optional<LibraryService.ReadingPosition> position = libraryService.getReadingPosition(manga.getId());
 
-            // Get detailed library entry info for better progress display
             Optional<LibraryService.LibraryEntryInfo> entryInfo = libraryService.getLibraryEntryInfo(manga.getId());
 
             if (entryInfo.isPresent()) {
@@ -284,13 +301,11 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                     if (chaptersRead > 0) {
                         readingStatusText = "Reading";
 
-                        // Show current reading position within the current chapter
                         if (position.isPresent()) {
                             LibraryService.ReadingPosition pos = position.get();
                             int totalPages = pos.getTotalPages();
 
                             if (totalPages > 0) {
-                                // Show which chapter you're currently reading
                                 progressText += String.format(" (Chapter %d)",
                                         chaptersRead + 1);
                             }
@@ -304,7 +319,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                         progressText = "0 chapters available";
                     }
                 } else {
-                    // Fallback for basic progress display
                     if (progress > 0) {
                         int progressPercent = (int) (progress * 100);
                         progressText = String.format("Progress: %d%%", progressPercent);
@@ -324,7 +338,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
         Label progressLabel = new Label(progressText);
         progressLabel.setStyle(String.format("-fx-font-size: 11px; -fx-text-fill: %s;", secondaryTextColor));
 
-        // Update status label with reading status
         Label statusLabel = new Label(readingStatusText);
         statusLabel.setStyle(String.format("-fx-font-size: 12px; -fx-text-fill: %s;", secondaryTextColor));
 
@@ -334,7 +347,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
 
         VBox box = new VBox(0, imageContainer, infoBox);
 
-        // Card styling
         String cardBackgroundColor = themeManager.getSecondaryBackgroundColor();
         box.setStyle(String.format(
                 "-fx-background-color: %s; " +
@@ -342,14 +354,12 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);",
                 cardBackgroundColor));
 
-        // Click handler
         box.setOnMouseClicked(e -> {
             if (onMangaSelectedCallback != null) {
                 onMangaSelectedCallback.accept(manga);
             }
         });
 
-        // Hover effects
         box.setOnMouseEntered(e -> box.setStyle(String.format(
                 "-fx-background-color: %s; " +
                         "-fx-background-radius: 8; " +
@@ -396,6 +406,12 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
         }).start();
     }
 
+    /**
+     * Dynamically calculates optimal column count based on available width.
+     * Algorithm: availableWidth / (cardWidth + gap) = columns
+     * Constrained between MIN_COLUMNS (3) and MAX_COLUMNS (8)
+     * Triggers grid refresh when column count changes
+     */
     private void updateGridColumns() {
         double availableWidth = scrollPane.getViewportBounds().getWidth();
         if (availableWidth > 0) {
@@ -403,7 +419,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
             newColumns = Math.min(newColumns, MAX_COLUMNS);
             if (newColumns != columns) {
                 columns = newColumns;
-                // Refresh the grid layout if we have content
                 if (!mangaGrid.getChildren().isEmpty()) {
                     loadLibraryContent();
                 }
@@ -412,7 +427,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
     }
 
     private void showAddSeriesView() {
-        // Call the add series callback to navigate to AddSeriesView
         if (onAddSeriesCallback != null) {
             onAddSeriesCallback.run();
         }
@@ -432,14 +446,11 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
 
     @Override
     public void onThemeChanged(ThemeManager.Theme newTheme) {
-        // Update the main background
         String backgroundColor = themeManager.getBackgroundColor();
         setStyle("-fx-background-color: " + backgroundColor + ";");
 
-        // Update search field and other components
         updateComponentThemes();
 
-        // Update existing manga cards styling without rebuilding the grid
         updateExistingCardThemes();
     }
 
@@ -449,7 +460,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
         String secondaryBackgroundColor = themeManager.getSecondaryBackgroundColor();
         String borderColor = themeManager.getBorderColor();
 
-        // Update top bar styling
         HBox topBar = (HBox) getTop();
         if (topBar != null) {
             topBar.setStyle(String.format(
@@ -458,7 +468,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                             "-fx-border-width: 0 0 1 0;",
                     secondaryBackgroundColor, borderColor));
 
-            // Update "My Library" label in the top bar
             topBar.getChildren().forEach(child -> {
                 if (child instanceof HBox) {
                     HBox section = (HBox) child;
@@ -472,7 +481,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
             });
         }
 
-        // Update search field
         if (searchField != null) {
             searchField.setStyle(String.format(
                     "-fx-background-color: %s; " +
@@ -484,12 +492,10 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                     backgroundColor, textColor, borderColor));
         }
 
-        // Update stats label
         if (statsLabel != null) {
             statsLabel.setStyle("-fx-text-fill: " + textColor + ";");
         }
 
-        // Update add series button
         if (addSeriesButton != null) {
             addSeriesButton.setStyle(String.format(
                     "-fx-background-color: #0096c9; " +
@@ -501,7 +507,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                             "-fx-padding: 10 20;"));
         }
 
-        // Update scroll pane
         if (scrollPane != null) {
             scrollPane.setStyle(String.format(
                     "-fx-background-color: %s; " +
@@ -509,17 +514,14 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                     backgroundColor, borderColor));
         }
 
-        // Update empty state container and its children
         if (emptyStateContainer != null) {
             emptyStateContainer.setStyle("-fx-background-color: " + backgroundColor + ";");
 
-            // Update empty state text colors
             emptyStateContainer.getChildren().forEach(child -> {
                 if (child instanceof Label) {
                     Label label = (Label) child;
                     String currentStyle = label.getStyle();
 
-                    // Remove any existing text-fill and add the new one
                     String newStyle = currentStyle.replaceAll("-fx-text-fill: [^;]+;", "")
                             .trim();
                     if (!newStyle.isEmpty() && !newStyle.endsWith(";")) {
@@ -537,19 +539,16 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
         String borderColor = themeManager.getBorderColor();
         String textColor = themeManager.getTextColor();
 
-        // Update styling of existing manga cards
         mangaGrid.getChildren().forEach(node -> {
             if (node instanceof VBox) {
                 VBox card = (VBox) node;
 
-                // Update the main card background color
                 card.setStyle(String.format(
                         "-fx-background-color: %s; " +
                                 "-fx-background-radius: 8; " +
                                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);",
                         cardBackgroundColor));
 
-                // Update hover effects by resetting the event handlers
                 card.setOnMouseEntered(e -> card.setStyle(String.format(
                         "-fx-background-color: %s; " +
                                 "-fx-background-radius: 8; " +
@@ -564,7 +563,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                                 "-fx-scale-x: 1.0; -fx-scale-y: 1.0;",
                         cardBackgroundColor)));
 
-                // Update the card's child components
                 card.getChildren().forEach(child -> {
                     if (child instanceof StackPane) {
                         StackPane imageContainer = (StackPane) child;
@@ -577,12 +575,10 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                                 cardBackgroundColor, borderColor));
                     } else if (child instanceof VBox) {
                         VBox infoBox = (VBox) child;
-                        // Update labels in the info box
                         infoBox.getChildren().forEach(infoChild -> {
                             if (infoChild instanceof Label) {
                                 Label label = (Label) infoChild;
                                 String currentStyle = label.getStyle();
-                                // Update text color while preserving other styles
                                 String newStyle = currentStyle.replaceAll("-fx-text-fill: [^;]+;", "")
                                         + " -fx-text-fill: " + textColor + ";";
                                 label.setStyle(newStyle);

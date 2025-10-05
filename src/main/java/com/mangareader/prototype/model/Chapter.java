@@ -21,7 +21,6 @@ public class Chapter {
         this.readingFormat = "normal"; // Default to normal reading mode
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
