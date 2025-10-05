@@ -1,0 +1,31 @@
+# Build directories
+target/
+*.class
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Application data (should not be tracked)
+data/
+cache/
+logs/
+
+# Configuration files (may contain sensitive data)
+config/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Maven wrapper
+!.mvn/wrapper/maven-wrapper.jar
+.github/
