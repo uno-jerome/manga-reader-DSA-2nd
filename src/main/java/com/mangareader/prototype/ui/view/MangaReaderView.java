@@ -10,10 +10,9 @@ import java.util.concurrent.Executors;
 import com.mangareader.prototype.model.Chapter;
 import com.mangareader.prototype.model.Manga;
 import com.mangareader.prototype.service.LibraryService;
-import com.mangareader.prototype.service.MangaService;
-import com.mangareader.prototype.service.impl.DefaultMangaServiceImpl;
-import com.mangareader.prototype.service.impl.LibraryServiceImpl;
+import com.mangareader.prototype.service.MangaServiceImpl;
 import com.mangareader.prototype.ui.component.ThemeManager;
+import com.mangareader.prototype.util.Logger;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -53,7 +52,7 @@ public class MangaReaderView extends BorderPane {
     private final HBox controlsBox;
     private final ThemeManager themeManager;
 
-    private final MangaService mangaService;
+    private final MangaServiceImpl mangaService;
     private final LibraryService libraryService;
     private final ExecutorService executorService;
 
@@ -74,8 +73,8 @@ public class MangaReaderView extends BorderPane {
 
     public MangaReaderView(Runnable onBackCallback) {
         this.onBackCallback = onBackCallback;
-        this.mangaService = new DefaultMangaServiceImpl();
-        this.libraryService = new LibraryServiceImpl();
+        this.mangaService = MangaServiceImpl.getInstance();
+        this.libraryService = LibraryService.getInstance();
         this.executorService = Executors.newSingleThreadExecutor();
         this.themeManager = ThemeManager.getInstance();
 
@@ -118,7 +117,7 @@ public class MangaReaderView extends BorderPane {
         pageInfoLabel = new Label("Page 0 / 0");
         pageInfoLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
 
-        backButton = new Button("⬅ Back to Details");
+        backButton = new Button("â¬… Back to Details");
         backButton.setStyle(
                 "-fx-background-color: #6c757d; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 12;");
         backButton.setOnAction(e -> {
@@ -127,26 +126,26 @@ public class MangaReaderView extends BorderPane {
             }
         });
 
-        modeToggleButton = new Button("📖 Traditional");
+        modeToggleButton = new Button("ðŸ“– Traditional");
         modeToggleButton.setStyle(
                 "-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 12;");
         modeToggleButton.setOnAction(e -> toggleReadingMode());
 
-        prevButton = new Button("◀ Previous");
+        prevButton = new Button("â—€ Previous");
         prevButton.setDisable(true);
         prevButton.setOnAction(e -> previousPage());
 
-        nextButton = new Button("Next ▶");
+        nextButton = new Button("Next â–¶");
         nextButton.setDisable(true);
         nextButton.setOnAction(e -> nextPage());
 
-        prevChapterButton = new Button("◄◄ Prev Chapter");
+        prevChapterButton = new Button("â—„â—„ Prev Chapter");
         prevChapterButton.setStyle(
                 "-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 11px; -fx-padding: 6 10;");
         prevChapterButton.setDisable(true);
         prevChapterButton.setOnAction(e -> previousChapter());
 
-        nextChapterButton = new Button("Next Chapter ►►");
+        nextChapterButton = new Button("Next Chapter â–ºâ–º");
         nextChapterButton.setStyle(
                 "-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 11px; -fx-padding: 6 10;");
         nextChapterButton.setDisable(true);
@@ -299,14 +298,14 @@ public class MangaReaderView extends BorderPane {
         saveReadingMode();
 
         if (isWebtoonMode) {
-            modeToggleButton.setText("📜 Webtoon");
+            modeToggleButton.setText("ðŸ“œ Webtoon");
             setCenter(webtoonScrollPane);
             setupWebtoonView();
             prevButton.setVisible(false);
             nextButton.setVisible(false);
             pageInfoLabel.setVisible(false);
         } else {
-            modeToggleButton.setText("📖 Traditional");
+            modeToggleButton.setText("ðŸ“– Traditional");
             setCenter(imageContainer);
             displayCurrentPage();
             prevButton.setVisible(true);
@@ -462,7 +461,7 @@ public class MangaReaderView extends BorderPane {
                 Platform.runLater(() -> {
                     displayError("Failed to load pages: " + e.getMessage());
                     progressIndicator.setVisible(false);
-                    e.printStackTrace();
+                    Logger.error("MangaReaderView", "Failed to load chapter pages", e);
                 });
             }
         });
@@ -797,9 +796,9 @@ public class MangaReaderView extends BorderPane {
      */
     private void updateModeToggleButton() {
         if (isWebtoonMode) {
-            modeToggleButton.setText("📜 Webtoon");
+            modeToggleButton.setText("ðŸ“œ Webtoon");
         } else {
-            modeToggleButton.setText("📖 Traditional");
+            modeToggleButton.setText("ðŸ“– Traditional");
         }
     }
 

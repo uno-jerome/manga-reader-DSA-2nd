@@ -1,12 +1,11 @@
-package com.mangareader.prototype.ui.dialog;
+package com.mangareader.prototype.ui.component;
 
 import java.util.Arrays;
 import java.util.Optional;
 
 import com.mangareader.prototype.model.Manga;
-import com.mangareader.prototype.service.MangaService;
-import com.mangareader.prototype.service.impl.DefaultMangaServiceImpl;
-import com.mangareader.prototype.ui.component.ThemeManager;
+import com.mangareader.prototype.service.MangaServiceImpl;
+import com.mangareader.prototype.util.ThreadPoolManager;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -30,7 +29,7 @@ import javafx.scene.layout.VBox;
 
 public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeChangeListener {
 
-    private final MangaService mangaService;
+    private final MangaServiceImpl mangaService;
     private final ThemeManager themeManager;
     private Manga mangaToAdd;
 
@@ -46,7 +45,7 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
     private TextField coverUrlField; // Added coverUrlField as a class member
 
     public AddSeriesModal(Manga manga) {
-        this.mangaService = new DefaultMangaServiceImpl();
+        this.mangaService = MangaServiceImpl.getInstance();
         this.themeManager = ThemeManager.getInstance();
         this.mangaToAdd = manga;
 
@@ -64,10 +63,11 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         dialogPane.setPrefWidth(900);
         dialogPane.setPrefHeight(700);
 
-        String cssPath = themeManager.getCurrentTheme().getCssPath();
         try {
-            String cssUrl = getClass().getResource(cssPath).toExternalForm();
-            dialogPane.getStylesheets().add(cssUrl);
+            String baseCssUrl = getClass().getResource(themeManager.getCurrentTheme().getBaseCssPath()).toExternalForm();
+            String themeCssUrl = getClass().getResource(themeManager.getCurrentTheme().getThemeCssPath()).toExternalForm();
+            dialogPane.getStylesheets().add(baseCssUrl);
+            dialogPane.getStylesheets().add(themeCssUrl);
         } catch (Exception e) {
             System.err.println("Error loading theme CSS for modal: " + e.getMessage());
             try {
@@ -379,7 +379,7 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
     private void tryFallbackCoverUrl(Manga manga, String placeholderUrl) {
         if (manga.getId() != null && !manga.getId().isEmpty()) {
             System.out.println("Trying to fetch fallback cover URL for manga ID: " + manga.getId());
-            new Thread(() -> {
+            ThreadPoolManager.getInstance().executeApiTask(() -> {
                 try {
                     mangaService.getMangaDetails(manga.getId()).ifPresentOrElse(
                             fullManga -> {
@@ -455,7 +455,7 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
                     javafx.application.Platform
                             .runLater(() -> coverImageView.setImage(new Image(placeholderUrl, true)));
                 }
-            }).start();
+            });
         } else {
             coverImageView.setImage(new Image(placeholderUrl, true));
         }
@@ -512,15 +512,13 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         }
     }
 
-    /**
-     * Apply the current theme stylesheet to the dialog
-     */
     private void applyCurrentTheme(DialogPane dialogPane) {
         dialogPane.getStylesheets().clear();
-        String cssPath = themeManager.getCurrentTheme().getCssPath();
         try {
-            String cssUrl = getClass().getResource(cssPath).toExternalForm();
-            dialogPane.getStylesheets().add(cssUrl);
+            String baseCssUrl = getClass().getResource(themeManager.getCurrentTheme().getBaseCssPath()).toExternalForm();
+            String themeCssUrl = getClass().getResource(themeManager.getCurrentTheme().getThemeCssPath()).toExternalForm();
+            dialogPane.getStylesheets().add(baseCssUrl);
+            dialogPane.getStylesheets().add(themeCssUrl);
         } catch (Exception e) {
             System.err.println("Error loading theme CSS for modal: " + e.getMessage());
             try {

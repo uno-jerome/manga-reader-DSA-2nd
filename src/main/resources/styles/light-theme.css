@@ -1,0 +1,191 @@
+/* Light Theme - Colors Only */
+
+.root {
+    -fx-base: #ffffff;
+    -fx-background: #ffffff;
+    -fx-control-inner-background: #f8f9fa;
+    -fx-control-inner-background-alt: #e9ecef;
+    -fx-accent: #007bff;
+    -fx-focus-color: #007bff;
+    -fx-faint-focus-color: #007bff22;
+    -fx-text-background-color: #ffffff;
+    -fx-text-inner-color: #333333;
+    -fx-text-fill: #333333;
+    -fx-primary-color: #007bff;
+    -fx-secondary-color: #6c757d;
+    -fx-success-color: #28a745;
+    -fx-warning-color: #ffc107;
+    -fx-danger-color: #dc3545;
+    -fx-surface-color: #f8f9fa;
+    -fx-border-color-default: #dee2e6;
+}
+
+.background { -fx-background-color: #ffffff; }
+.application-light { -fx-background-color: #ffffff; }
+
+/* Buttons */
+.button {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333333;
+    -fx-border-color: #dee2e6;
+}
+.button:hover { -fx-background-color: #e9ecef; -fx-border-color: #adb5bd; }
+.button:pressed { -fx-background-color: #dee2e6; }
+.button:focused { -fx-border-color: #007bff; }
+.button:disabled { -fx-background-color: #f8f9fa; -fx-text-fill: #6c757d; -fx-border-color: #dee2e6; }
+
+.button.primary, .button:default {
+    -fx-background-color: #007bff;
+    -fx-text-fill: white;
+    -fx-border-color: #0056b3;
+}
+.button.primary:hover, .button:default:hover { -fx-background-color: #0056b3; -fx-border-color: #004085; }
+.button.primary:pressed, .button:default:pressed { -fx-background-color: #004085; }
+
+.button.success { -fx-background-color: #28a745; -fx-text-fill: white; -fx-border-color: #1e7e34; }
+.button.success:hover { -fx-background-color: #218838; }
+
+.button.warning { -fx-background-color: #ffc107; -fx-text-fill: #212529; -fx-border-color: #d39e00; }
+.button.warning:hover { -fx-background-color: #e0a800; }
+
+.button.danger { -fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-color: #bd2130; }
+.button.danger:hover { -fx-background-color: #c82333; }
+
+/* Text fields */
+.text-field {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333333;
+    -fx-border-color: #dee2e6;
+}
+.text-field:focused { -fx-border-color: #007bff; }
+
+/* Text areas */
+.text-area {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333333;
+    -fx-border-color: #dee2e6;
+}
+
+/* Labels */
+.label { -fx-text-fill: #333333; }
+.label.heading { -fx-text-fill: #212529; }
+.label.subtitle { -fx-text-fill: #6c757d; }
+
+/* Scroll panes */
+.scroll-pane { -fx-background-color: #ffffff; -fx-border-color: #dee2e6; }
+.scroll-pane > .viewport { -fx-background-color: #ffffff; }
+
+/* Tree view */
+.tree-view { -fx-background-color: #ffffff; -fx-text-fill: #333333; -fx-border-color: #dee2e6; }
+.tree-view .tree-cell { -fx-background-color: transparent; -fx-text-fill: #333333; }
+.tree-view .tree-cell:hover { -fx-background-color: #f8f9fa; }
+.tree-view .tree-cell:selected { -fx-background-color: #e3f2fd; -fx-text-fill: #0056b3; }
+
+/* List view */
+.list-view { -fx-background-color: #ffffff; -fx-border-color: #dee2e6; }
+.list-view .list-cell { -fx-background-color: transparent; -fx-text-fill: #333333; }
+.list-view .list-cell:hover { -fx-background-color: #f8f9fa; }
+.list-view .list-cell:selected { -fx-background-color: #e3f2fd; -fx-text-fill: #0056b3; }
+
+/* Toolbar */
+.tool-bar { -fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; }
+.tool-bar .button { -fx-background-color: transparent; -fx-border-color: transparent; }
+.tool-bar .button:hover { -fx-background-color: #e9ecef; }
+
+/* Combo boxes */
+.combo-box { -fx-background-color: #ffffff; -fx-text-fill: #333333; -fx-border-color: #dee2e6; }
+.combo-box:focused { -fx-border-color: #007bff; }
+.combo-box .list-cell { -fx-background-color: transparent; -fx-text-fill: #333333; }
+
+/* Check boxes */
+.check-box { -fx-text-fill: #333333; }
+.check-box .box { -fx-background-color: #ffffff; -fx-border-color: #dee2e6; }
+.check-box:selected .mark { -fx-background-color: #007bff; }
+.check-box:hover .box { -fx-border-color: #007bff; }
+
+/* Separators */
+.separator { -fx-background-color: #dee2e6; }
+.separator .line { -fx-border-color: #dee2e6; }
+
+/* Manga cards */
+.manga-card { -fx-background-color: #ffffff; -fx-border-color: #dee2e6; }
+.manga-card:hover { -fx-border-color: #adb5bd; }
+
+/* Empty state */
+.empty-state { -fx-background-color: #ffffff; }
+.empty-state .title { -fx-text-fill: #212529; }
+.empty-state .subtitle { -fx-text-fill: #6c757d; }
+.empty-state .icon { -fx-text-fill: #6c757d; }
+.empty-state .message { -fx-text-fill: #6c757d; }
+
+/* Progress bars */
+.progress-bar { -fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; }
+.progress-bar .bar { -fx-background-color: #007bff; }
+
+/* Tables */
+.table-view { -fx-background-color: #ffffff; -fx-border-color: #dee2e6; }
+.table-view .column-header { -fx-background-color: #f8f9fa; -fx-text-fill: #333333; -fx-border-color: #dee2e6; }
+.table-view .table-cell { -fx-background-color: #ffffff; -fx-text-fill: #333333; -fx-border-color: #dee2e6; }
+.table-view .table-row-cell:selected { -fx-background-color: #e3f2fd; -fx-text-fill: #0056b3; }
+.table-view .table-row-cell:hover { -fx-background-color: #f8f9fa; }
+
+/* Tabs */
+.tab-pane { -fx-background-color: #ffffff; }
+.tab { -fx-background-color: #f8f9fa; -fx-text-fill: #333333; -fx-border-color: #dee2e6; }
+.tab:selected { -fx-background-color: #007bff; -fx-text-fill: white; }
+.tab:hover { -fx-background-color: #e9ecef; }
+
+/* Context menus */
+.context-menu { -fx-background-color: #ffffff; -fx-border-color: #dee2e6; }
+.menu-item { -fx-background-color: transparent; -fx-text-fill: #333333; }
+.menu-item:hover { -fx-background-color: #f8f9fa; }
+
+/* Tooltips */
+.tooltip { -fx-background-color: #343a40; -fx-text-fill: #ffffff; -fx-border-color: #495057; }
+
+/* Dialog panes */
+.dialog-pane { -fx-background-color: #ffffff; -fx-border-color: #dee2e6; }
+.dialog-pane .header-panel { -fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; }
+.dialog-pane .button-bar { -fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; }
+.dialog-pane .content { -fx-background-color: #ffffff; }
+
+.add-series-dialog { -fx-background-color: #ffffff; }
+.add-series-dialog .content { -fx-background-color: #ffffff; }
+.add-series-dialog .button-bar { -fx-background-color: #f8f9fa; }
+
+/* Sidebar */
+.sidebar { -fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; }
+.sidebar .tree-view { -fx-background-color: #f8f9fa; -fx-border-color: transparent; }
+.sidebar .tree-view .tree-cell { -fx-background-color: transparent; -fx-text-fill: #333333; }
+.sidebar .tree-view .tree-cell:hover { -fx-background-color: #e9ecef; }
+.sidebar .tree-view .tree-cell:selected { -fx-background-color: #007bff; -fx-text-fill: white; }
+
+.sidebar .list-view { -fx-background-color: #f8f9fa; -fx-border-color: transparent; }
+.sidebar .list-view .list-cell { -fx-background-color: transparent; -fx-text-fill: #333333; }
+.sidebar .list-view .list-cell:hover { -fx-background-color: #e9ecef; }
+.sidebar .list-view .list-cell:selected { -fx-background-color: #007bff; -fx-text-fill: white; }
+
+/* AddSeriesView manga cards */
+.manga-card {
+    -fx-background-color: #f8f9fa;
+}
+
+/* AddSeriesView advanced search components */
+.advanced-search-pane {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dee2e6;
+}
+
+.filter-label {
+    -fx-text-fill: #333333;
+}
+
+.filter-checkbox {
+    -fx-text-fill: #333333;
+}
+
+.filter-combobox {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333333;
+    -fx-border-color: #dee2e6;
+}

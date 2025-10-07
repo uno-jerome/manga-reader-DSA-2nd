@@ -6,9 +6,9 @@ import java.util.function.Consumer;
 
 import com.mangareader.prototype.model.Manga;
 import com.mangareader.prototype.service.LibraryService;
-import com.mangareader.prototype.service.impl.LibraryServiceImpl;
 import com.mangareader.prototype.ui.component.ThemeManager;
 import com.mangareader.prototype.util.ImageCache;
+import com.mangareader.prototype.util.ThreadPoolManager;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -66,7 +66,7 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
 
     public LibraryView(Consumer<Manga> onMangaSelectedCallback) {
         this.onMangaSelectedCallback = onMangaSelectedCallback;
-        this.libraryService = new LibraryServiceImpl();
+        this.libraryService = LibraryService.getInstance();
         this.themeManager = ThemeManager.getInstance();
 
         HBox topBar = createTopBar();
@@ -164,7 +164,7 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
     }
 
     private void loadLibraryContent() {
-        new Thread(() -> {
+        ThreadPoolManager.getInstance().executeGeneralTask(() -> {
             try {
                 List<Manga> libraryManga = libraryService.getLibrary();
                 Platform.runLater(() -> {
@@ -183,7 +183,7 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
                 });
                 System.err.println("Error loading library: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     private void updateStatsLabel(int count) {
@@ -383,7 +383,7 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
             return;
         }
 
-        new Thread(() -> {
+        ThreadPoolManager.getInstance().executeGeneralTask(() -> {
             try {
                 List<Manga> allManga = libraryService.getLibrary();
                 List<Manga> filteredManga = allManga.stream()
@@ -403,7 +403,7 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
             } catch (Exception e) {
                 System.err.println("Error filtering library: " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     /**

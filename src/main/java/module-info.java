@@ -16,18 +16,14 @@ module com.mangareader.prototype {
     opens com.mangareader.prototype to javafx.fxml;
     opens com.mangareader.prototype.ui.view to javafx.fxml;
     opens com.mangareader.prototype.ui.component to javafx.fxml;
-    opens com.mangareader.prototype.ui.dialog to javafx.fxml;
     opens com.mangareader.prototype.model to com.fasterxml.jackson.databind;
     opens com.mangareader.prototype.source to com.fasterxml.jackson.databind;
-    opens com.mangareader.prototype.service.impl to com.fasterxml.jackson.databind;
+    opens com.mangareader.prototype.service to com.fasterxml.jackson.databind;
 
     exports com.mangareader.prototype;
     exports com.mangareader.prototype.ui.view;
     exports com.mangareader.prototype.ui.component;
-    exports com.mangareader.prototype.ui.dialog;
     exports com.mangareader.prototype.model;
     exports com.mangareader.prototype.source;
-    exports com.mangareader.prototype.source.impl;
     exports com.mangareader.prototype.service;
-    exports com.mangareader.prototype.service.impl;
 }

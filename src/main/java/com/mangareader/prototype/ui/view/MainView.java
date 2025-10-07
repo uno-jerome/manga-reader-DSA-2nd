@@ -1,15 +1,16 @@
 package com.mangareader.prototype.ui.view;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.mangareader.prototype.model.Chapter;
 import com.mangareader.prototype.model.Manga;
 import com.mangareader.prototype.service.LibraryService;
-import com.mangareader.prototype.service.MangaService;
-import com.mangareader.prototype.service.impl.DefaultMangaServiceImpl;
-import com.mangareader.prototype.service.impl.LibraryServiceImpl;
+import com.mangareader.prototype.service.MangaServiceImpl;
 import com.mangareader.prototype.ui.component.Sidebar;
 import com.mangareader.prototype.ui.component.ThemeManager;
+import com.mangareader.prototype.util.ThreadPoolManager;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.ToolBar;
@@ -123,7 +124,7 @@ public class MainView extends BorderPane implements ThemeManager.ThemeChangeList
                 backCallback);
 
         mangaDetailView.getAddToLibraryButton().setOnAction(e -> {
-            LibraryService libraryService = new LibraryServiceImpl();
+            LibraryService libraryService = LibraryService.getInstance();
 
             if (libraryService.isInLibrary(manga.getId())) {
                 mangaDetailView.getAddToLibraryButton().setText("Already in Library");
@@ -152,25 +153,19 @@ public class MainView extends BorderPane implements ThemeManager.ThemeChangeList
                                 "-fx-padding: 10 20; " +
                                 "-fx-background-radius: 5;");
 
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(2000);
-                        Platform.runLater(() -> {
-                            mangaDetailView.getAddToLibraryButton().setText("In Library");
-                            mangaDetailView.getAddToLibraryButton().setDisable(true);
-                            mangaDetailView.getAddToLibraryButton().setStyle(
-                                    "-fx-font-size: 14px; " +
-                                            "-fx-background-color: #28a745; " +
-                                            "-fx-text-fill: white; " +
-                                            "-fx-padding: 10 20; " +
-                                            "-fx-background-radius: 5; " +
-                                            "-fx-opacity: 0.8;");
-                        });
-                    } catch (InterruptedException ex) {
-                        System.err.println("Thread interrupted while updating button: " + ex.getMessage());
-                        Thread.currentThread().interrupt();
-                    }
-                }).start();
+                ThreadPoolManager.getInstance().schedule(() -> {
+                    Platform.runLater(() -> {
+                        mangaDetailView.getAddToLibraryButton().setText("In Library");
+                        mangaDetailView.getAddToLibraryButton().setDisable(true);
+                        mangaDetailView.getAddToLibraryButton().setStyle(
+                                "-fx-font-size: 14px; " +
+                                        "-fx-background-color: #28a745; " +
+                                        "-fx-text-fill: white; " +
+                                        "-fx-padding: 10 20; " +
+                                        "-fx-background-radius: 5; " +
+                                        "-fx-opacity: 0.8;");
+                    });
+                }, 2, TimeUnit.SECONDS);
             } else {
                 mangaDetailView.getAddToLibraryButton().setText("Failed to Add");
                 mangaDetailView.getAddToLibraryButton().setStyle(
@@ -200,7 +195,7 @@ public class MainView extends BorderPane implements ThemeManager.ThemeChangeList
 
         mangaReaderView.setMangaId(manga.getId());
 
-        MangaService mangaService = new DefaultMangaServiceImpl();
+        MangaServiceImpl mangaService = MangaServiceImpl.getInstance();
         List<Chapter> allChapters = mangaService.getChapters(manga.getId());
 
         mangaReaderView.setChapterList(allChapters, chapter);

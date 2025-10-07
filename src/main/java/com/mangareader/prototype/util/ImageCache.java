@@ -177,7 +177,7 @@ public class ImageCache {
         }
     }
 
-    private Image downloadAndCacheImage(String url, Path cachedFile, double width, double height) {
+    private Image downloadAndCacheImage(String url, Path cachedFile) {
         try {
             URL imageUrl = URI.create(url).toURL();
             try (ReadableByteChannel rbc = Channels.newChannel(imageUrl.openStream());
@@ -236,7 +236,7 @@ public class ImageCache {
                 if (Files.size(cachedFile) < 1024) {
                     System.err.println("Cached file too small, removing: " + filename);
                     Files.deleteIfExists(cachedFile);
-                    return downloadAndCacheImage(url, cachedFile, width, height);
+                    return downloadAndCacheImage(url, cachedFile);
                 }
 
                 try {
@@ -247,7 +247,7 @@ public class ImageCache {
                     if (cachedImage.isError()) {
                         System.err.println("Cached image is corrupted, re-downloading: " + filename);
                         Files.deleteIfExists(cachedFile);
-                        Image newImage = downloadAndCacheImage(url, cachedFile, width, height);
+                        Image newImage = downloadAndCacheImage(url, cachedFile);
                         return newImage != null ? newImage : loadImage(url, width, height);
                     }
 
@@ -255,12 +255,12 @@ public class ImageCache {
                 } catch (Exception e) {
                     System.err.println("Error loading cached image, re-downloading: " + e.getMessage());
                     Files.deleteIfExists(cachedFile);
-                    Image newImage = downloadAndCacheImage(url, cachedFile, width, height);
+                    Image newImage = downloadAndCacheImage(url, cachedFile);
                     return newImage != null ? newImage : loadImage(url, width, height);
                 }
             } else {
                 System.out.println("Downloading and caching image: " + url);
-                Image image = downloadAndCacheImage(url, cachedFile, width, height);
+                Image image = downloadAndCacheImage(url, cachedFile);
                 return image != null ? image : loadImage(url, width, height);
             }
         } catch (Exception e) {

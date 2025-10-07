@@ -15,11 +15,12 @@ import java.util.stream.Collectors;
 import com.mangareader.prototype.model.Manga;
 import com.mangareader.prototype.model.SearchParams;
 import com.mangareader.prototype.model.SearchResult;
+import com.mangareader.prototype.source.MangaDexSource;
 import com.mangareader.prototype.source.MangaSource;
-import com.mangareader.prototype.source.impl.MangaDexSource;
+import com.mangareader.prototype.ui.component.AddSeriesModal;
 import com.mangareader.prototype.ui.component.ThemeManager;
-import com.mangareader.prototype.ui.dialog.AddSeriesModal;
 import com.mangareader.prototype.util.ImageCache;
+import com.mangareader.prototype.util.ThreadPoolManager;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -276,6 +277,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
     private void setupAdvancedSearchPane() {
         advancedSearchPane = new VBox(15);
         advancedSearchPane.setPadding(new Insets(15));
+        advancedSearchPane.getStyleClass().add("advanced-search-pane");
 
         Label genreLabel = new Label("Genres");
         genreLabel.getStyleClass().add("filter-label");
@@ -291,6 +293,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         statusSelector = new ComboBox<>();
         statusSelector.setPromptText("Any Status");
         statusSelector.setPrefWidth(200);
+        statusSelector.getStyleClass().add("filter-combobox");
 
         statusSelector.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && !newVal.equals("Any Status")) {
@@ -346,14 +349,10 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         genreCheckboxes.clear();
 
         List<String> genres = source.getAvailableGenres();
-        String textColor = themeManager.getTextColor();
 
         for (String genre : genres) {
             CheckBox genreCheck = new CheckBox(genre);
-            genreCheck.setStyle(String.format(
-                    "-fx-text-fill: %s; " +
-                            "-fx-padding: 5px;",
-                    textColor));
+            genreCheck.getStyleClass().add("filter-checkbox");
             genreCheck.selectedProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal) {
                     searchParams.addIncludedGenre(genre);
@@ -401,15 +400,6 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
 
         currentPage = 1;
         pagination.setCurrentPageIndex(0);
-    }
-
-    private int calculateNewColumnCount(double availableWidth) {
-        if (availableWidth <= 0) {
-            return MIN_COLUMNS;
-        }
-        double spacing = mangaGrid.getHgap();
-        int newColumns = Math.max(MIN_COLUMNS, (int) ((availableWidth + spacing) / (CARD_WIDTH + spacing)));
-        return Math.min(newColumns, MAX_COLUMNS);
     }
 
     private void updateGridColumns() {
@@ -468,7 +458,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
 
         updateMangaGridWithPlaceholders();
 
-        new Thread(() -> {
+        ThreadPoolManager.getInstance().executeApiTask(() -> {
             try {
                 SearchResult result = selectedSource.advancedSearch(searchParams);
                 Platform.runLater(() -> {
@@ -490,7 +480,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
                     updateMangaGridWithResults(results);
                 });
             }
-        }).start();
+        });
     }
 
     private void updateMangaGridWithResults(List<Manga> mangaList) {
@@ -586,10 +576,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         box.setPrefWidth(CARD_WIDTH);
         box.setPrefHeight(CARD_HEIGHT + 40);
         box.setPadding(new Insets(0, 0, 8, 0));
-        box.setStyle(
-                "-fx-background-color: #222;" +
-                        "-fx-background-radius: 20;" +
-                        "-fx-effect: dropshadow(gaussian, #000, 4, 0, 0, 2);");
+        box.getStyleClass().add("manga-card");
 
         ProgressIndicator progressIndicator = new ProgressIndicator();
         progressIndicator.setMaxSize(40, 40);
@@ -605,10 +592,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         box.setPrefWidth(CARD_WIDTH);
         box.setPrefHeight(CARD_HEIGHT + 40);
         box.setPadding(new Insets(0, 0, 8, 0));
-        box.setStyle(
-                "-fx-background-color: #222;" +
-                        "-fx-background-radius: 20;" +
-                        "-fx-effect: dropshadow(gaussian, #000, 4, 0, 0, 2);");
+        box.getStyleClass().add("manga-card");
 
         ImageView imageView = new ImageView();
         imageView.setFitWidth(CARD_WIDTH);
@@ -667,7 +651,10 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         titleLabel.setTextAlignment(TextAlignment.CENTER);
         titleLabel.setMaxWidth(CARD_WIDTH - (8 * 2));
         titleLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
-        titleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #eee; -fx-font-weight: bold;");
+        
+        // Use theme-aware text color instead of hardcoded #eee
+        String titleColor = themeManager.getTextColor();
+        titleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + titleColor + "; -fx-font-weight: bold;");
 
         HBox titleBox = new HBox(titleLabel);
         titleBox.setPrefWidth(CARD_WIDTH);
@@ -685,7 +672,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
                 loadingIndicator.setMaxSize(40, 40);
                 imageContainer.getChildren().add(loadingIndicator);
 
-                new Thread(() -> {
+                ThreadPoolManager.getInstance().executeApiTask(() -> {
                     try {
                         selectedSource.getMangaDetails(manga.getId()).ifPresentOrElse(
                                 fullManga -> Platform.runLater(() -> {
@@ -710,7 +697,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
                             imageContainer.getChildren().add(errorLabel);
                         });
                     }
-                }).start();
+                });
             } else {
                 AddSeriesModal modal = new AddSeriesModal(manga);
                 Optional<Manga> result = modal.showAndAwaitResult();
@@ -741,7 +728,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
 
         updateMangaGridWithPlaceholders();
 
-        new Thread(() -> {
+        ThreadPoolManager.getInstance().executeApiTask(() -> {
             try {
                 SearchResult result = selectedSource.advancedSearch(searchParams);
                 Platform.runLater(() -> {
@@ -765,7 +752,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
                     resultsCountLabel.setText("Error loading content");
                 });
             }
-        }).start();
+        });
     }
 
     /**
@@ -795,32 +782,6 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
     public void onThemeChanged(ThemeManager.Theme newTheme) {
         String backgroundColor = themeManager.getBackgroundColor();
         setStyle("-fx-background-color: " + backgroundColor + ";");
-
-        mangaGrid.getChildren().stream()
-                .filter(node -> node instanceof VBox)
-                .map(node -> (VBox) node)
-                .forEach(card -> {
-                    String cardBackgroundColor = themeManager.isDarkTheme() ? "#222" : "#fff";
-                    String textColor = themeManager.getTextColor();
-
-                    String currentStyle = card.getStyle();
-                    String newStyle = currentStyle.replaceAll("-fx-background-color: [^;]+;", "")
-                            + " -fx-background-color: " + cardBackgroundColor + ";";
-                    card.setStyle(newStyle);
-
-                    card.getChildren().stream()
-                            .filter(child -> child instanceof HBox)
-                            .map(child -> (HBox) child)
-                            .flatMap(hbox -> hbox.getChildren().stream())
-                            .filter(node -> node instanceof Label)
-                            .map(node -> (Label) node)
-                            .forEach(label -> {
-                                String labelStyle = label.getStyle();
-                                String newLabelStyle = labelStyle.replaceAll("-fx-text-fill: [^;]+;", "")
-                                        + " -fx-text-fill: " + textColor + ";";
-                                label.setStyle(newLabelStyle);
-                            });
-                });
 
         updateComponentThemes();
     }
@@ -859,63 +820,8 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
     }
 
     private void updateAdvancedSearchPaneTheme() {
-        if (advancedSearchPane == null)
-            return;
-
-        String secondaryBackgroundColor = themeManager.getSecondaryBackgroundColor();
-        String borderColor = themeManager.getBorderColor();
-        String textColor = themeManager.getTextColor();
-
-        advancedSearchPane.setStyle(String.format(
-                "-fx-background-color: %s; " +
-                        "-fx-border-color: %s; " +
-                        "-fx-border-radius: 5; " +
-                        "-fx-background-radius: 5;",
-                secondaryBackgroundColor, borderColor));
-
-        advancedSearchPane.getChildren().forEach(node -> {
-            if (node instanceof Label label && label.getStyleClass().contains("filter-label")) {
-                label.setStyle(String.format(
-                        "-fx-font-size: 14px; " +
-                                "-fx-font-weight: bold; " +
-                                "-fx-text-fill: %s;",
-                        textColor));
-            } else if (node instanceof FlowPane flowPane) {
-                flowPane.getChildren().forEach(child -> {
-                    if (child instanceof CheckBox checkbox) {
-                        checkbox.setStyle(String.format(
-                                "-fx-text-fill: %s; " +
-                                        "-fx-padding: 5px;",
-                                textColor));
-                    }
-                });
-            } else if (node instanceof ComboBox<?> comboBox) {
-                comboBox.setStyle(String.format(
-                        "-fx-background-color: %s; " +
-                                "-fx-text-fill: %s; " +
-                                "-fx-border-color: %s; " +
-                                "-fx-border-width: 1px; " +
-                                "-fx-background-radius: 4px; " +
-                                "-fx-border-radius: 4px;",
-                        secondaryBackgroundColor, textColor, borderColor));
-            } else if (node instanceof Separator separator) {
-                separator.setStyle(String.format(
-                        "-fx-background-color: %s;",
-                        borderColor));
-            } else if (node instanceof HBox buttonBox) {
-                buttonBox.getChildren().forEach(child -> {
-                    if (child instanceof Button button &&
-                            !button.getStyleClass().contains("success") &&
-                            !button.getStyleClass().contains("danger")) {
-                        button.setStyle(String.format(
-                                "-fx-background-color: %s; " +
-                                        "-fx-text-fill: %s; " +
-                                        "-fx-border-color: %s;",
-                                secondaryBackgroundColor, textColor, borderColor));
-                    }
-                });
-            }
-        });
+        // CSS classes now handle all theme styling automatically
+        // No need to iterate through components
     }
 
     public void dispose() {

@@ -3,8 +3,8 @@ package com.mangareader.prototype.ui.component;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mangareader.prototype.source.MangaDexSource;
 import com.mangareader.prototype.source.MangaSource;
-import com.mangareader.prototype.source.impl.MangaDexSource;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;

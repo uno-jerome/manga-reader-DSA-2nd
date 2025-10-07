@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
 
+import com.mangareader.prototype.util.ThreadPoolManager;
+
 import javafx.scene.Scene;
 
 /**
@@ -19,25 +21,40 @@ public class ThemeManager {
     private Theme currentTheme;
     private Scene scene;
     private final List<ThemeChangeListener> listeners;
+    
+    private String cachedBaseCssUrl;
+    private String cachedLightThemeCssUrl;
+    private String cachedDarkThemeCssUrl;
 
     public enum Theme {
-        LIGHT("light", "/styles/main.css"),
-        DARK("dark", "/styles/dark.css");
+        LIGHT("light", "/styles/base.css", "/styles/light-theme.css"),
+        DARK("dark", "/styles/base.css", "/styles/dark-theme.css");
 
         private final String name;
-        private final String cssPath;
+        private final String baseCssPath;
+        private final String themeCssPath;
 
-        Theme(String name, String cssPath) {
+        Theme(String name, String baseCssPath, String themeCssPath) {
             this.name = name;
-            this.cssPath = cssPath;
+            this.baseCssPath = baseCssPath;
+            this.themeCssPath = themeCssPath;
         }
 
         public String getName() {
             return name;
         }
 
+        public String getBaseCssPath() {
+            return baseCssPath;
+        }
+
+        public String getThemeCssPath() {
+            return themeCssPath;
+        }
+
+        @Deprecated
         public String getCssPath() {
-            return cssPath;
+            return themeCssPath;
         }
     }
 
@@ -45,6 +62,18 @@ public class ThemeManager {
         preferences = Preferences.userNodeForPackage(ThemeManager.class);
         listeners = new ArrayList<>();
         loadTheme();
+        initializeCssCache();
+    }
+    
+    private void initializeCssCache() {
+        try {
+            cachedBaseCssUrl = getClass().getResource(Theme.LIGHT.getBaseCssPath()).toExternalForm();
+            cachedLightThemeCssUrl = getClass().getResource(Theme.LIGHT.getThemeCssPath()).toExternalForm();
+            cachedDarkThemeCssUrl = getClass().getResource(Theme.DARK.getThemeCssPath()).toExternalForm();
+            System.out.println("CSS URLs cached successfully");
+        } catch (Exception e) {
+            System.err.println("Error caching CSS URLs: " + e.getMessage());
+        }
     }
 
     public static ThemeManager getInstance() {
@@ -65,9 +94,9 @@ public class ThemeManager {
 
     public void setTheme(Theme theme) {
         this.currentTheme = theme;
-        saveTheme();
-        applyTheme(theme);
         notifyListeners(theme);
+        applyTheme(theme);
+        saveTheme();
     }
 
     public void toggleTheme() {
@@ -75,31 +104,24 @@ public class ThemeManager {
         setTheme(newTheme);
     }
 
-    /**
-     * Add a listener to be notified of theme changes
-     */
     public void addThemeChangeListener(ThemeChangeListener listener) {
         listeners.add(listener);
     }
 
-    /**
-     * Remove a theme change listener
-     */
     public void removeThemeChangeListener(ThemeChangeListener listener) {
         listeners.remove(listener);
     }
 
-    /**
-     * Notify all listeners of theme change
-     */
     private void notifyListeners(Theme newTheme) {
-        for (ThemeChangeListener listener : listeners) {
-            try {
-                listener.onThemeChanged(newTheme);
-            } catch (Exception e) {
-                System.err.println("Error notifying theme change listener: " + e.getMessage());
+        javafx.application.Platform.runLater(() -> {
+            for (ThemeChangeListener listener : listeners) {
+                try {
+                    listener.onThemeChanged(newTheme);
+                } catch (Exception e) {
+                    System.err.println("Error notifying theme change listener: " + e.getMessage());
+                }
             }
-        }
+        });
     }
 
     public boolean isDarkTheme() {
@@ -120,8 +142,14 @@ public class ThemeManager {
     private void saveTheme() {
         try {
             preferences.put(THEME_PREFERENCE_KEY, currentTheme.getName());
-            preferences.flush();
-            System.out.println("Saved theme to preferences: " + currentTheme.getName());
+            ThreadPoolManager.getInstance().executeGeneralTask(() -> {
+                try {
+                    preferences.flush();
+                    System.out.println("Saved theme to preferences: " + currentTheme.getName());
+                } catch (Exception e) {
+                    System.err.println("Error flushing theme preferences: " + e.getMessage());
+                }
+            });
         } catch (Exception e) {
             System.err.println("Error saving theme preferences: " + e.getMessage());
         }
@@ -135,64 +163,54 @@ public class ThemeManager {
         scene.getStylesheets().clear();
 
         try {
-            String cssPath = getClass().getResource(theme.getCssPath()).toExternalForm();
-            scene.getStylesheets().add(cssPath);
-            System.out.println("Applied theme: " + theme.getName() + " (" + cssPath + ")");
+            if (cachedBaseCssUrl != null) {
+                scene.getStylesheets().add(cachedBaseCssUrl);
+                
+                String themeCssUrl = (theme == Theme.DARK) ? cachedDarkThemeCssUrl : cachedLightThemeCssUrl;
+                if (themeCssUrl != null) {
+                    scene.getStylesheets().add(themeCssUrl);
+                }
+                
+                System.out.println("Applied cached theme: " + theme.getName());
+            } else {
+                String baseCssPath = getClass().getResource(theme.getBaseCssPath()).toExternalForm();
+                scene.getStylesheets().add(baseCssPath);
+                
+                String themeCssPath = getClass().getResource(theme.getThemeCssPath()).toExternalForm();
+                scene.getStylesheets().add(themeCssPath);
+                
+                System.out.println("Applied theme (uncached): " + theme.getName());
+            }
         } catch (Exception e) {
             System.err.println("Error loading theme CSS: " + e.getMessage());
-            if (theme != Theme.LIGHT) {
+            if (theme != Theme.LIGHT && cachedBaseCssUrl != null && cachedLightThemeCssUrl != null) {
                 try {
-                    String defaultCssPath = getClass().getResource(Theme.LIGHT.getCssPath()).toExternalForm();
-                    scene.getStylesheets().add(defaultCssPath);
+                    scene.getStylesheets().add(cachedBaseCssUrl);
+                    scene.getStylesheets().add(cachedLightThemeCssUrl);
                 } catch (Exception fallbackError) {
                     System.err.println("Failed to load fallback theme: " + fallbackError.getMessage());
                 }
             }
         }
-
-        refreshUIComponents();
     }
 
-    /**
-     * Force refresh of UI components to apply new theme
-     */
-    private void refreshUIComponents() {
-        if (scene != null && scene.getRoot() != null) {
-            scene.getRoot().applyCss();
-        }
-    }
-
-    /**
-     * Get the appropriate text color for the current theme
-     */
     public String getTextColor() {
         return isDarkTheme() ? "#e0e0e0" : "#333333";
     }
 
-    /**
-     * Get the appropriate background color for the current theme
-     */
+
     public String getBackgroundColor() {
         return isDarkTheme() ? "#2b2b2b" : "#ffffff";
     }
 
-    /**
-     * Get the appropriate secondary background color for the current theme
-     */
     public String getSecondaryBackgroundColor() {
         return isDarkTheme() ? "#3c3c3c" : "#f5f5f5";
     }
 
-    /**
-     * Get the appropriate border color for the current theme
-     */
     public String getBorderColor() {
         return isDarkTheme() ? "#555555" : "#e0e0e0";
     }
 
-    /**
-     * Interface for components that want to be notified of theme changes
-     */
     public interface ThemeChangeListener {
         void onThemeChanged(Theme newTheme);
     }

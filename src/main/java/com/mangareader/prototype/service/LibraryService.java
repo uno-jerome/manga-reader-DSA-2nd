@@ -1,194 +1,411 @@
 package com.mangareader.prototype.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mangareader.prototype.model.Manga;
 
 /**
- * Service for managing the user's manga library
- * Provides clean separation between library management and external manga
- * sources
+ * Service for managing the user's manga library with JSON file storage.
+ * Manages the user's manga library with proper isolation from external sources.
+ * Uses singleton pattern to ensure only one instance exists.
  */
-public interface LibraryService {
+public class LibraryService {
+    private static LibraryService instance;
 
-    /**
-     * Get all manga in the user's library
-     * 
-     * @return List of manga in library (empty list if no manga added)
-     */
-    List<Manga> getLibrary();
+    private final Map<String, LibraryEntry> library;
+    private final ObjectMapper objectMapper;
+    private final Path dataDir;
+    private final Path libraryFile;
 
-    /**
-     * Add a manga to the user's library
-     * 
-     * @param manga The manga to add
-     * @return true if successfully added, false if already exists
-     */
-    boolean addToLibrary(Manga manga);
+    private LibraryService() {
+        this.library = new ConcurrentHashMap<>();
+        this.objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
-    /**
-     * Remove a manga from the user's library
-     * 
-     * @param mangaId The ID of the manga to remove
-     * @return true if successfully removed, false if not found
-     */
-    boolean removeFromLibrary(String mangaId);
+        String projectDir = System.getProperty("user.dir");
+        this.dataDir = Paths.get(projectDir, "data");
+        this.libraryFile = dataDir.resolve("library.json");
 
-    /**
-     * Check if a manga is in the library
-     * 
-     * @param mangaId The ID of the manga to check
-     * @return true if manga is in library
-     */
-    boolean isInLibrary(String mangaId);
+        initializeLibrary();
+    }
 
-    /**
-     * Get a specific manga from the library
-     * 
-     * @param mangaId The ID of the manga
-     * @return Optional containing the manga if found
-     */
-    Optional<Manga> getLibraryManga(String mangaId);
+    public static synchronized LibraryService getInstance() {
+        if (instance == null) {
+            instance = new LibraryService();
+        }
+        return instance;
+    }
 
-    /**
-     * Update reading progress for a manga in the library
-     * 
-     * @param mangaId       The ID of the manga
-     * @param chaptersRead  Number of chapters read
-     * @param totalChapters Total number of chapters
-     */
-    void updateReadingProgress(String mangaId, int chaptersRead, int totalChapters);
+    private void initializeLibrary() {
+        try {
+            Files.createDirectories(dataDir);
 
-    /**
-     * Update the current reading position for a specific chapter
-     * 
-     * @param mangaId    The ID of the manga
-     * @param chapterId  The ID of the current chapter
-     * @param pageNumber The current page number (0-based)
-     * @param totalPages Total pages in the chapter
-     */
-    void updateReadingPosition(String mangaId, String chapterId, int pageNumber, int totalPages);
+            if (Files.exists(libraryFile)) {
+                loadLibrary();
+                System.out.println("Loaded " + library.size() + " manga from library");
+            } else {
+                System.out.println("Starting with empty library");
+            }
+        } catch (IOException e) {
+            System.err.println("Error initializing library: " + e.getMessage());
+        }
+    }
 
-    /**
-     * Get the current reading position for a manga
-     * 
-     * @param mangaId The ID of the manga
-     * @return Optional containing the reading position if found
-     */
-    Optional<ReadingPosition> getReadingPosition(String mangaId);
+    private void loadLibrary() throws IOException {
+        if (Files.exists(libraryFile) && Files.size(libraryFile) > 0) {
+            List<LibraryEntry> entries = objectMapper.readValue(
+                    libraryFile.toFile(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, LibraryEntry.class));
+            entries.forEach(entry -> library.put(entry.getManga().getId(), entry));
+        }
+    }
 
-    /**
-     * Mark a chapter as read
-     * 
-     * @param mangaId   The ID of the manga
-     * @param chapterId The ID of the chapter
-     */
-    void markChapterAsRead(String mangaId, String chapterId);
-
-    /**
-     * Check if a specific chapter has been read
-     * 
-     * @param mangaId   The ID of the manga
-     * @param chapterId The ID of the chapter
-     * @return true if the chapter has been read, false otherwise
-     */
-    boolean isChapterRead(String mangaId, String chapterId);
-
-    /**
-     * Update the total chapter count for a manga in the library
-     * 
-     * @param mangaId       The ID of the manga
-     * @param totalChapters The total number of chapters
-     */
-    void updateTotalChapters(String mangaId, int totalChapters);
-
-    /**
-     * Get detailed library entry information for progress display
-     * 
-     * @param mangaId The ID of the manga
-     * @return LibraryEntryInfo containing detailed progress information
-     */
-    Optional<LibraryEntryInfo> getLibraryEntryInfo(String mangaId);
-
-    /**
-     * Get reading progress percentage for a manga
-     * 
-     * @param mangaId The ID of the manga
-     * @return Progress percentage (0.0 to 1.0)
-     */
-    double getReadingProgress(String mangaId);
-
-    /**
-     * Clear the entire library (for testing/reset purposes)
-     */
-    void clearLibrary();
-
-    /**
-     * Get library statistics
-     * 
-     * @return LibraryStats object containing various statistics
-     */
-    LibraryStats getLibraryStats();
-
-    /**
-     * Search within the user's library
-     * 
-     * @param query Search query
-     * @return List of matching manga from library
-     */
-    List<Manga> searchLibrary(String query);
-
-    /**
-     * Library statistics
-     */
-    class LibraryStats {
-        private final int totalManga;
-        private final int readingManga;
-        private final int completedManga;
-        private final int plannedManga;
-
-        public LibraryStats(int totalManga, int readingManga, int completedManga, int plannedManga) {
-            this.totalManga = totalManga;
-            this.readingManga = readingManga;
-            this.completedManga = completedManga;
-            this.plannedManga = plannedManga;
+    private void saveLibrary() {
+        try {
+            List<LibraryEntry> entries = new ArrayList<>(library.values());
+            objectMapper.writeValue(libraryFile.toFile(), entries);
+            System.out.println("Saved " + entries.size() + " manga to library");
+        } catch (IOException e) {
+            System.err.println("Error saving library: " + e.getMessage());
+        }
+    }
+    public List<Manga> getLibrary() {
+        return library.values().stream()
+                .map(LibraryEntry::getManga)
+                .sorted((a, b) -> b.getLastUpdated() != null && a.getLastUpdated() != null
+                        ? b.getLastUpdated().compareTo(a.getLastUpdated())
+                        : a.getTitle().compareTo(b.getTitle()))
+                .collect(Collectors.toList());
+    }
+    public boolean addToLibrary(Manga manga) {
+        if (manga == null || manga.getId() == null) {
+            return false;
         }
 
-        public int getTotalManga() {
-            return totalManga;
+        if (library.containsKey(manga.getId())) {
+            System.out.println("Manga already in library: " + manga.getTitle());
+            return false;
         }
 
-        public int getReadingManga() {
-            return readingManga;
+        manga.setLastUpdated(LocalDateTime.now());
+
+        LibraryEntry entry = new LibraryEntry(manga, LocalDateTime.now());
+        library.put(manga.getId(), entry);
+        saveLibrary();
+
+        System.out.println("Added to library: " + manga.getTitle());
+        return true;
+    }
+    public boolean removeFromLibrary(String mangaId) {
+        if (mangaId == null) {
+            return false;
         }
 
-        public int getCompletedManga() {
-            return completedManga;
+        LibraryEntry removed = library.remove(mangaId);
+        if (removed != null) {
+            saveLibrary();
+            System.out.println("Removed from library: " + removed.getManga().getTitle());
+            return true;
+        }
+        return false;
+    }
+    public boolean isInLibrary(String mangaId) {
+        return mangaId != null && library.containsKey(mangaId);
+    }
+    public Optional<Manga> getLibraryManga(String mangaId) {
+        LibraryEntry entry = library.get(mangaId);
+        return entry != null ? Optional.of(entry.getManga()) : Optional.empty();
+    }
+    public void updateReadingProgress(String mangaId, int chaptersRead, int totalChapters) {
+        LibraryEntry entry = library.get(mangaId);
+        if (entry != null) {
+            entry.setChaptersRead(chaptersRead);
+            entry.setTotalChapters(totalChapters);
+            entry.setLastRead(LocalDateTime.now());
+            saveLibrary();
+        }
+    }
+    public void clearLibrary() {
+        library.clear();
+        try {
+            if (Files.exists(libraryFile)) {
+                Files.delete(libraryFile);
+            }
+            System.out.println("Library cleared");
+        } catch (IOException e) {
+            System.err.println("Error clearing library: " + e.getMessage());
+        }
+    }
+    public LibraryStats getLibraryStats() {
+        int total = library.size();
+        int reading = 0;
+        int completed = 0;
+        int planned = 0;
+
+        for (LibraryEntry entry : library.values()) {
+            String status = entry.getManga().getStatus();
+            if ("Reading".equalsIgnoreCase(status)) {
+                reading++;
+            } else if ("Completed".equalsIgnoreCase(status)) {
+                completed++;
+            } else if ("Plan to Read".equalsIgnoreCase(status)) {
+                planned++;
+            }
         }
 
-        public int getPlannedManga() {
-            return plannedManga;
+        return new LibraryStats(total, reading, completed, planned);
+    }
+    public List<Manga> searchLibrary(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return getLibrary();
+        }
+
+        String searchTerm = query.toLowerCase().trim();
+        return library.values().stream()
+                .map(LibraryEntry::getManga)
+                .filter(manga -> manga.getTitle().toLowerCase().contains(searchTerm) ||
+                        (manga.getAuthor() != null && manga.getAuthor().toLowerCase().contains(searchTerm)) ||
+                        (manga.getArtist() != null && manga.getArtist().toLowerCase().contains(searchTerm)))
+                .sorted((a, b) -> a.getTitle().compareTo(b.getTitle()))
+                .collect(Collectors.toList());
+    }
+    public void updateReadingPosition(String mangaId, String chapterId, int pageNumber, int totalPages) {
+        LibraryEntry entry = library.get(mangaId);
+        if (entry != null) {
+            entry.setCurrentChapterId(chapterId);
+            entry.setCurrentPageNumber(pageNumber);
+            entry.setCurrentChapterTotalPages(totalPages);
+            entry.setLastRead(LocalDateTime.now());
+
+            if ("Plan to Read".equals(entry.getReadingStatus())) {
+                entry.setReadingStatus("Reading");
+            }
+
+            saveLibrary();
+        }
+    }
+
+    public Optional<ReadingPosition> getReadingPosition(String mangaId) {
+        LibraryEntry entry = library.get(mangaId);
+        if (entry != null && entry.getCurrentChapterId() != null) {
+            return Optional.of(new ReadingPosition(
+                    mangaId,
+                    entry.getCurrentChapterId(),
+                    entry.getCurrentPageNumber(),
+                    entry.getCurrentChapterTotalPages(),
+                    entry.getLastRead()));
+        }
+        return Optional.empty();
+    }
+
+    public void markChapterAsRead(String mangaId, String chapterId) {
+        LibraryEntry entry = library.get(mangaId);
+        if (entry != null) {
+            entry.markChapterAsRead(chapterId);
+            entry.setLastRead(LocalDateTime.now());
+
+            if ("Plan to Read".equals(entry.getReadingStatus())) {
+                entry.setReadingStatus("Reading");
+            }
+
+            if (entry.getTotalChapters() > 0 && entry.getChaptersRead() >= entry.getTotalChapters()) {
+                entry.setReadingStatus("Completed");
+            }
+
+            saveLibrary();
+        }
+    }
+    public boolean isChapterRead(String mangaId, String chapterId) {
+        LibraryEntry entry = library.get(mangaId);
+        return entry != null && entry.isChapterRead(chapterId);
+    }
+    public double getReadingProgress(String mangaId) {
+        LibraryEntry entry = library.get(mangaId);
+        return entry != null ? entry.getProgressPercentage() : 0.0;
+    }
+    public void updateTotalChapters(String mangaId, int totalChapters) {
+        LibraryEntry entry = library.get(mangaId);
+        if (entry != null) {
+            entry.setTotalChapters(totalChapters);
+            saveLibrary();
+            System.out.println("Updated total chapters for " + entry.getManga().getTitle() + ": " + totalChapters);
+        }
+    }
+    public Optional<LibraryEntryInfo> getLibraryEntryInfo(String mangaId) {
+        LibraryEntry entry = library.get(mangaId);
+        if (entry != null) {
+            return Optional.of(new LibraryEntryInfo(
+                    entry.getChaptersRead(),
+                    entry.getTotalChapters(),
+                    entry.getReadingStatus()));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Library entry wrapper to store additional metadata
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class LibraryEntry {
+        private Manga manga;
+        private LocalDateTime addedDate;
+        private LocalDateTime lastRead;
+        private int chaptersRead;
+        private int totalChapters;
+        private String readingStatus; // "Reading", "Completed", "Plan to Read", "On Hold", "Dropped"
+
+        private String currentChapterId;
+        private int currentPageNumber;
+        private int currentChapterTotalPages;
+        private List<String> readChapterIds; // Track which chapters have been fully read
+
+        public LibraryEntry() {
+            this.readChapterIds = new ArrayList<>();
+        }
+
+        public LibraryEntry(Manga manga, LocalDateTime addedDate) {
+            this.manga = manga;
+            this.addedDate = addedDate;
+            this.readingStatus = "Plan to Read";
+            this.chaptersRead = 0;
+            this.totalChapters = 0;
+            this.currentPageNumber = 0;
+            this.currentChapterTotalPages = 0;
+            this.readChapterIds = new ArrayList<>();
+        }
+
+        public Manga getManga() {
+            return manga;
+        }
+
+        public void setManga(Manga manga) {
+            this.manga = manga;
+        }
+
+        public LocalDateTime getAddedDate() {
+            return addedDate;
+        }
+
+        public void setAddedDate(LocalDateTime addedDate) {
+            this.addedDate = addedDate;
+        }
+
+        public LocalDateTime getLastRead() {
+            return lastRead;
+        }
+
+        public void setLastRead(LocalDateTime lastRead) {
+            this.lastRead = lastRead;
+        }
+
+        public int getChaptersRead() {
+            return chaptersRead;
+        }
+
+        public void setChaptersRead(int chaptersRead) {
+            this.chaptersRead = chaptersRead;
+        }
+
+        public int getTotalChapters() {
+            return totalChapters;
+        }
+
+        public void setTotalChapters(int totalChapters) {
+            this.totalChapters = totalChapters;
+        }
+
+        public String getReadingStatus() {
+            return readingStatus;
+        }
+
+        public void setReadingStatus(String readingStatus) {
+            this.readingStatus = readingStatus;
+        }
+
+        public String getCurrentChapterId() {
+            return currentChapterId;
+        }
+
+        public void setCurrentChapterId(String currentChapterId) {
+            this.currentChapterId = currentChapterId;
+        }
+
+        public int getCurrentPageNumber() {
+            return currentPageNumber;
+        }
+
+        public void setCurrentPageNumber(int currentPageNumber) {
+            this.currentPageNumber = currentPageNumber;
+        }
+
+        public int getCurrentChapterTotalPages() {
+            return currentChapterTotalPages;
+        }
+
+        public void setCurrentChapterTotalPages(int currentChapterTotalPages) {
+            this.currentChapterTotalPages = currentChapterTotalPages;
+        }
+
+        public List<String> getReadChapterIds() {
+            return readChapterIds;
+        }
+
+        public void setReadChapterIds(List<String> readChapterIds) {
+            this.readChapterIds = readChapterIds != null ? readChapterIds : new ArrayList<>();
+        }
+
+        public boolean isChapterRead(String chapterId) {
+            return readChapterIds != null && readChapterIds.contains(chapterId);
+        }
+
+        public void markChapterAsRead(String chapterId) {
+            if (readChapterIds == null) {
+                readChapterIds = new ArrayList<>();
+            }
+            if (!readChapterIds.contains(chapterId)) {
+                readChapterIds.add(chapterId);
+                chaptersRead = readChapterIds.size();
+            }
+        }
+
+        @JsonIgnore
+        public double getProgressPercentage() {
+            return totalChapters > 0 ? (double) chaptersRead / totalChapters : 0.0;
         }
     }
 
     /**
-     * Reading position tracking for auto-resume functionality
+     * Represents the current reading position in a manga
      */
-    class ReadingPosition {
+    public static class ReadingPosition {
         private final String mangaId;
         private final String chapterId;
         private final int pageNumber;
         private final int totalPages;
-        private final java.time.LocalDateTime lastUpdated;
+        private final LocalDateTime lastRead;
 
-        public ReadingPosition(String mangaId, String chapterId, int pageNumber, int totalPages,
-                java.time.LocalDateTime lastUpdated) {
+        public ReadingPosition(String mangaId, String chapterId, int pageNumber, int totalPages, LocalDateTime lastRead) {
             this.mangaId = mangaId;
             this.chapterId = chapterId;
             this.pageNumber = pageNumber;
             this.totalPages = totalPages;
-            this.lastUpdated = lastUpdated;
+            this.lastRead = lastRead;
         }
 
         public String getMangaId() {
@@ -207,19 +424,15 @@ public interface LibraryService {
             return totalPages;
         }
 
-        public java.time.LocalDateTime getLastUpdated() {
-            return lastUpdated;
-        }
-
-        public double getChapterProgress() {
-            return totalPages > 0 ? (double) pageNumber / totalPages : 0.0;
+        public LocalDateTime getLastRead() {
+            return lastRead;
         }
     }
 
     /**
-     * Library entry information for detailed progress display
+     * Contains information about a library entry
      */
-    class LibraryEntryInfo {
+    public static class LibraryEntryInfo {
         private final int chaptersRead;
         private final int totalChapters;
         private final String readingStatus;
@@ -242,8 +455,41 @@ public interface LibraryService {
             return readingStatus;
         }
 
-        public double getProgressPercentage() {
+        public double getProgress() {
             return totalChapters > 0 ? (double) chaptersRead / totalChapters : 0.0;
+        }
+    }
+
+    /**
+     * Statistics about the library
+     */
+    public static class LibraryStats {
+        private final int total;
+        private final int reading;
+        private final int completed;
+        private final int planned;
+
+        public LibraryStats(int total, int reading, int completed, int planned) {
+            this.total = total;
+            this.reading = reading;
+            this.completed = completed;
+            this.planned = planned;
+        }
+
+        public int getTotal() {
+            return total;
+        }
+
+        public int getReading() {
+            return reading;
+        }
+
+        public int getCompleted() {
+            return completed;
+        }
+
+        public int getPlanned() {
+            return planned;
         }
     }
 }

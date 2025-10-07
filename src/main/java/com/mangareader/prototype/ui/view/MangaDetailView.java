@@ -2,6 +2,7 @@ package com.mangareader.prototype.ui.view;
 
 import com.mangareader.prototype.ui.component.ThemeManager;
 import com.mangareader.prototype.util.ImageCache;
+import com.mangareader.prototype.util.ThreadPoolManager;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,9 +15,7 @@ import java.util.stream.Collectors;
 import com.mangareader.prototype.model.Chapter;
 import com.mangareader.prototype.model.Manga;
 import com.mangareader.prototype.service.LibraryService;
-import com.mangareader.prototype.service.MangaService;
-import com.mangareader.prototype.service.impl.DefaultMangaServiceImpl;
-import com.mangareader.prototype.service.impl.LibraryServiceImpl;
+import com.mangareader.prototype.service.MangaServiceImpl;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -83,10 +82,9 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
     private final GridPane statsGrid;
     private final Map<String, Label> statsLabels = new HashMap<>();
 
-    private final MangaService mangaService;
+    private final MangaServiceImpl mangaService;
     private final LibraryService libraryService;
     private final Consumer<Chapter> onChapterSelectedCallback;
-    private final Runnable onBackCallback;
     private Manga currentManga;
     private final ObservableList<Chapter> chapters = FXCollections.observableArrayList();
     private final FilteredList<Chapter> filteredChapters = new FilteredList<>(chapters, p -> true);
@@ -106,9 +104,8 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
     public MangaDetailView(Consumer<Chapter> onChapterSelectedCallback, Runnable onBackCallback) {
         this.onChapterSelectedCallback = onChapterSelectedCallback;
-        this.onBackCallback = onBackCallback;
-        this.mangaService = new DefaultMangaServiceImpl();
-        this.libraryService = new LibraryServiceImpl();
+        this.mangaService = MangaServiceImpl.getInstance();
+        this.libraryService = LibraryService.getInstance();
         this.themeManager = ThemeManager.getInstance();
 
         setPadding(new Insets(20));
@@ -459,7 +456,7 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
         HBox mainLayout = new HBox(30, leftPanel, rightPanel);
         mainLayout.setPadding(new Insets(20));
 
-        Button backButton = new Button("← Back");
+        Button backButton = new Button("< Back");
         backButton.setStyle(
                 "-fx-font-size: 14px; " +
                         "-fx-background-color: #6c757d; " +
@@ -467,9 +464,6 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                         "-fx-padding: 10 20; " +
                         "-fx-background-radius: 5;");
         backButton.setOnAction(e -> {
-            if (onBackCallback != null) {
-                onBackCallback.run();
-            }
         });
 
         VBox completeLayout = new VBox(15);
@@ -831,7 +825,7 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
         ((ScrollPane) volumeTabForLoading.getContent()).setContent(new StackPane(loadingVolumeLabel));
 
-        new Thread(() -> {
+        ThreadPoolManager.getInstance().executeApiTask(() -> {
             List<Chapter> fetchedChapters = mangaService.getChapters(mangaId);
             Platform.runLater(() -> {
                 if (fetchedChapters != null && !fetchedChapters.isEmpty()) {
@@ -910,7 +904,7 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                     updateReadingButtonText();
                 }
             });
-        }).start();
+        });
     }
 
     private void loadCoverImage(Manga manga) {

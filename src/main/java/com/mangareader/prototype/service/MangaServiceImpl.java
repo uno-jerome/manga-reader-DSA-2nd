@@ -1,4 +1,4 @@
-package com.mangareader.prototype.service.impl;
+package com.mangareader.prototype.service;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,18 +15,20 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mangareader.prototype.model.Chapter;
 import com.mangareader.prototype.model.Manga;
-import com.mangareader.prototype.service.MangaService;
+import com.mangareader.prototype.source.MangaDexSource;
 import com.mangareader.prototype.source.MangaSource;
-import com.mangareader.prototype.source.impl.MangaDexSource;
+import com.mangareader.prototype.util.Logger;
 
-public abstract class MangaServiceImpl implements MangaService {
+public class MangaServiceImpl {
+    private static MangaServiceImpl instance;
+    
     private final Map<String, Manga> library;
     private final ObjectMapper objectMapper;
     private final Path dataDir;
     private final Path libraryFile;
     private final MangaSource mangaSource;
 
-    public MangaServiceImpl() {
+    private MangaServiceImpl() {
         this.library = new ConcurrentHashMap<>();
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
@@ -41,8 +43,15 @@ public abstract class MangaServiceImpl implements MangaService {
             Files.createDirectories(dataDir);
             loadLibrary();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaServiceImpl", "Error initializing service", e);
         }
+    }
+
+    public static synchronized MangaServiceImpl getInstance() {
+        if (instance == null) {
+            instance = new MangaServiceImpl();
+        }
+        return instance;
     }
 
     private void loadLibrary() throws IOException {
@@ -58,12 +67,10 @@ public abstract class MangaServiceImpl implements MangaService {
         objectMapper.writeValue(libraryFile.toFile(), new ArrayList<>(library.values()));
     }
 
-    @Override
     public List<Manga> searchManga(String query) {
         return mangaSource.search(query, false); // Pass false for includeNsfw by default
     }
 
-    @Override
     public Optional<Manga> getMangaById(String id) {
         Manga manga = library.get(id);
         if (manga == null) {
@@ -72,7 +79,6 @@ public abstract class MangaServiceImpl implements MangaService {
         return Optional.of(manga);
     }
 
-    @Override
     public List<Chapter> getChapters(String mangaId) {
         Manga manga = library.get(mangaId);
         if (manga != null && !manga.getChapters().isEmpty()) {
@@ -81,7 +87,6 @@ public abstract class MangaServiceImpl implements MangaService {
         return mangaSource.getChapters(mangaId);
     }
 
-    @Override
     public Optional<Chapter> getChapter(String mangaId, String chapterId) {
         List<Chapter> chapters = getChapters(mangaId);
         return chapters.stream()
@@ -89,7 +94,6 @@ public abstract class MangaServiceImpl implements MangaService {
                 .findFirst();
     }
 
-    @Override
     public void downloadChapter(Chapter chapter) {
         List<String> pageUrls = mangaSource.getChapterPages(chapter.getMangaId(), chapter.getId());
         Path chapterDir = dataDir.resolve("downloads")
@@ -102,46 +106,41 @@ public abstract class MangaServiceImpl implements MangaService {
             chapter.setDownloadPath(chapterDir.toString());
             saveLibrary();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaServiceImpl", "Error downloading chapter", e);
         }
     }
 
-    @Override
     public void updateMangaInfo(Manga manga) {
         library.put(manga.getId(), manga);
         try {
             saveLibrary();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaServiceImpl", "Error updating manga info", e);
         }
     }
 
-    @Override
     public List<Manga> getLibrary() {
         return new ArrayList<>(library.values());
     }
 
-    @Override
     public void addToLibrary(Manga manga) {
         library.put(manga.getId(), manga);
         try {
             saveLibrary();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaServiceImpl", "Error adding to library", e);
         }
     }
 
-    @Override
     public void removeFromLibrary(String mangaId) {
         library.remove(mangaId);
         try {
             saveLibrary();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaServiceImpl", "Error removing from library", e);
         }
     }
 
-    @Override
     public Optional<Manga> getMangaDetails(String mangaId) {
         Manga manga = library.get(mangaId);
         if (manga != null) {
@@ -150,12 +149,15 @@ public abstract class MangaServiceImpl implements MangaService {
         return mangaSource.getMangaDetails(mangaId);
     }
 
-    @Override
     public String getCoverUrl(String mangaId) {
         Manga manga = library.get(mangaId);
         if (manga != null && manga.getCoverUrl() != null && !manga.getCoverUrl().isEmpty()) {
             return manga.getCoverUrl();
         }
         return mangaSource.getCoverUrl(mangaId);
+    }
+
+    public List<String> getChapterPages(String mangaId, String chapterId) {
+        return mangaSource.getChapterPages(mangaId, chapterId);
     }
 }

@@ -1,4 +1,4 @@
-package com.mangareader.prototype.source.impl;
+package com.mangareader.prototype.source;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -22,7 +22,7 @@ import com.mangareader.prototype.model.Chapter;
 import com.mangareader.prototype.model.Manga;
 import com.mangareader.prototype.model.SearchParams;
 import com.mangareader.prototype.model.SearchResult;
-import com.mangareader.prototype.source.MangaSource;
+import com.mangareader.prototype.util.Logger;
 
 public class MangaDexSource implements MangaSource {
     private static final String BASE_URL = "https://api.mangadex.org";
@@ -89,7 +89,7 @@ public class MangaDexSource implements MangaSource {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaDexSource", "Error searching manga", e);
         }
         return results;
     }
@@ -184,7 +184,7 @@ public class MangaDexSource implements MangaSource {
             result.setResults(mangas);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaDexSource", "Error in advanced search", e);
         }
         return result;
     }
@@ -286,7 +286,7 @@ public class MangaDexSource implements MangaSource {
                 return Optional.of(manga);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaDexSource", "Error getting manga details", e);
         }
         return Optional.empty();
     }
@@ -326,7 +326,7 @@ public class MangaDexSource implements MangaSource {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaDexSource", "Error getting chapters", e);
         }
         return chapters;
     }
@@ -399,7 +399,7 @@ public class MangaDexSource implements MangaSource {
             }
         } catch (IOException e) {
             System.err.println("Error fetching chapter pages: " + e.getMessage());
-            e.printStackTrace();
+            Logger.error("MangaDexSource", "Error getting chapter pages", e);
         }
 
         System.out.println("Total pages found: " + pages.size());
@@ -442,7 +442,7 @@ public class MangaDexSource implements MangaSource {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("MangaDexSource", "Error getting cover URL", e);
         }
         return null;
     }
@@ -451,8 +451,16 @@ public class MangaDexSource implements MangaSource {
         Manga manga = new Manga();
         JsonNode attributes = node.path("attributes");
         manga.setId(node.path("id").asText());
-        manga.setTitle(attributes.path("title").path("en").asText());
-        manga.setDescription(attributes.path("description").path("en").asText());
+        
+        // Extract title with fallback to multiple languages
+        // MangaDex API returns titles as: {"en": "Title", "ja": "タイトル", "ja-ro": "Romaji"}
+        String title = extractLocalizedString(attributes.path("title"));
+        manga.setTitle(title != null && !title.isEmpty() ? title : "Unknown Title");
+        
+        // Extract description with same fallback mechanism
+        String description = extractLocalizedString(attributes.path("description"));
+        manga.setDescription(description != null && !description.isEmpty() ? description : "No description available");
+        
         manga.setStatus(attributes.path("status").asText());
         String updatedAt = attributes.path("updatedAt").asText("");
         if (!updatedAt.isEmpty()) {
@@ -577,5 +585,45 @@ public class MangaDexSource implements MangaSource {
         }
 
         return chapter;
+    }
+
+    /**
+     * Extracts localized string from MangaDex API response with fallback mechanism.
+     * Tries multiple language codes in order: en, en-us, ja-ro, ja, and any other available.
+     * 
+     * @param node JsonNode containing localized strings (e.g., title or description object)
+     * @return The first non-empty localized string found, or null if none available
+     */
+    private String extractLocalizedString(JsonNode node) {
+        if (node == null || node.isNull() || node.isMissingNode()) {
+            return null;
+        }
+
+        // Priority order: English, English-US, Romanized Japanese, Japanese, then any other
+        String[] preferredLanguages = { "en", "en-us", "ja-ro", "ja" };
+
+        // Try preferred languages first
+        for (String lang : preferredLanguages) {
+            if (node.has(lang)) {
+                String value = node.get(lang).asText();
+                if (value != null && !value.isEmpty()) {
+                    return value;
+                }
+            }
+        }
+
+        // If no preferred language found, try any available language
+        if (node.isObject()) {
+            var fields = node.fields();
+            while (fields.hasNext()) {
+                var entry = fields.next();
+                String value = entry.getValue().asText();
+                if (value != null && !value.isEmpty()) {
+                    return value;
+                }
+            }
+        }
+
+        return null;
     }
 }
