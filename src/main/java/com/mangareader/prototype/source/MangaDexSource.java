@@ -451,6 +451,7 @@ public class MangaDexSource implements MangaSource {
         Manga manga = new Manga();
         JsonNode attributes = node.path("attributes");
         manga.setId(node.path("id").asText());
+        manga.setSource(getName()); // Set source to "MangaDex"
         
         // Extract title with fallback to multiple languages
         // MangaDex API returns titles as: {"en": "Title", "ja": "タイトル", "ja-ro": "Romaji"}

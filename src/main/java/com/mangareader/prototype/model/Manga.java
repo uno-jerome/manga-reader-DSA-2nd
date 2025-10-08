@@ -17,6 +17,7 @@ public class Manga {
     private List<Chapter> chapters;
     private String language;
     private String readingFormat;
+    private String source; // Which manga source this came from (e.g., "MangaDex", "Mgeko")
 
     public Manga() {
         this.genres = new ArrayList<>();
@@ -118,5 +119,13 @@ public class Manga {
 
     public void setReadingFormat(String readingFormat) {
         this.readingFormat = readingFormat;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }

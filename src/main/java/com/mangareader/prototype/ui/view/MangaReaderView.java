@@ -117,7 +117,7 @@ public class MangaReaderView extends BorderPane {
         pageInfoLabel = new Label("Page 0 / 0");
         pageInfoLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
 
-        backButton = new Button("â¬… Back to Details");
+        backButton = new Button("< Back to Details");
         backButton.setStyle(
                 "-fx-background-color: #6c757d; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 12;");
         backButton.setOnAction(e -> {
@@ -126,26 +126,26 @@ public class MangaReaderView extends BorderPane {
             }
         });
 
-        modeToggleButton = new Button("ðŸ“– Traditional");
+        modeToggleButton = new Button("< Traditional");
         modeToggleButton.setStyle(
                 "-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 12;");
         modeToggleButton.setOnAction(e -> toggleReadingMode());
 
-        prevButton = new Button("â—€ Previous");
+        prevButton = new Button("< Previous");
         prevButton.setDisable(true);
         prevButton.setOnAction(e -> previousPage());
 
-        nextButton = new Button("Next â–¶");
+        nextButton = new Button("Next >");
         nextButton.setDisable(true);
         nextButton.setOnAction(e -> nextPage());
 
-        prevChapterButton = new Button("â—„â—„ Prev Chapter");
+        prevChapterButton = new Button("< Prev Chapter");
         prevChapterButton.setStyle(
                 "-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 11px; -fx-padding: 6 10;");
         prevChapterButton.setDisable(true);
         prevChapterButton.setOnAction(e -> previousChapter());
 
-        nextChapterButton = new Button("Next Chapter â–ºâ–º");
+        nextChapterButton = new Button("Next Chapter >");
         nextChapterButton.setStyle(
                 "-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 11px; -fx-padding: 6 10;");
         nextChapterButton.setDisable(true);
