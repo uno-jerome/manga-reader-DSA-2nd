@@ -27,10 +27,8 @@ import com.mangareader.prototype.config.AppConfig;
  */
 public class ThreadPoolManager {
     
-    // Singleton instance
     private static ThreadPoolManager instance;
     
-    // Thread pools for different task types
     private final ExecutorService imagePool;
     private final ExecutorService apiPool;
     private final ExecutorService generalPool;
@@ -70,7 +68,6 @@ public class ThreadPoolManager {
             new NamedThreadFactory("scheduled-worker")
         );
         
-        // Register shutdown hook to clean up threads on app exit
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
         
         Logger.info("ThreadPoolManager", "Thread pools initialized - Image: " + 
@@ -181,7 +178,6 @@ public class ThreadPoolManager {
     public void shutdown() {
         Logger.info("ThreadPoolManager", "Shutting down thread pools... Active tasks: " + activeTasks.get());
         
-        // Shut down pools gracefully
         shutdownPool(imagePool, "Image");
         shutdownPool(apiPool, "API");
         shutdownPool(generalPool, "General");

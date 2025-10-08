@@ -18,8 +18,7 @@ public class Chapter {
 
     public Chapter() {
         this.pageUrls = new ArrayList<>();
-        this.readingFormat = "normal"; // Default to normal reading mode
-    }
+        this.readingFormat = "normal";    }
 
     public String getId() {
         return id;

@@ -48,13 +48,11 @@ public class MgekoSource implements MangaSource {
     public List<Manga> getPopularManga(int page) {
         List<Manga> results = new ArrayList<>();
         try {
-            // Get popular manga from browse page (sorted by views)
             String url = BASE_URL + "/browse-comics/?results=" + page + "&filter=views";
             Logger.info("MgekoSource", "Fetching popular manga: " + url);
 
             Document doc = fetchDocument(url);
             
-            // Parse manga items: ul.novel-list > li.novel-item
             Elements mangaElements = doc.select("ul.novel-list > li.novel-item");
             
             Logger.info("MgekoSource", "Found " + mangaElements.size() + " manga elements");
@@ -88,7 +86,6 @@ public class MgekoSource implements MangaSource {
 
             Document doc = fetchDocument(url);
             
-            // Parse search results: ul.novel-list > li.novel-item
             Elements mangaElements = doc.select("ul.novel-list > li.novel-item");
             
             Logger.info("MgekoSource", "Found " + mangaElements.size() + " search result elements");
@@ -115,7 +112,6 @@ public class MgekoSource implements MangaSource {
     public SearchResult advancedSearch(SearchParams params) {
         SearchResult result = new SearchResult();
         
-        // If no query, load popular manga
         if (params.getQuery() == null || params.getQuery().trim().isEmpty()) {
             Logger.info("MgekoSource", "No query - loading popular manga");
             List<Manga> popularMangas = getPopularManga(params.getPage());
@@ -124,7 +120,6 @@ public class MgekoSource implements MangaSource {
             result.setCurrentPage(params.getPage());
             result.setTotalPages(1); // mgeko doesn't have clear pagination info
         } else {
-            // With query, do search
             List<Manga> mangas = search(params.getQuery(), params.isIncludeNsfw());
             result.setResults(mangas);
             result.setTotalResults(mangas.size());
@@ -156,7 +151,6 @@ public class MgekoSource implements MangaSource {
     @Override
     public Optional<Manga> getMangaDetails(String mangaId) {
         try {
-            // mangaId is the slug (e.g., "surviving-as-a-genius-on-borrowed-time")
             String url = BASE_URL + "/manga/" + mangaId + "/";
             Logger.info("MgekoSource", "Getting manga details: " + url);
 
@@ -166,16 +160,13 @@ public class MgekoSource implements MangaSource {
             manga.setId(mangaId);
             manga.setSource(NAME);
             
-            // Parse title
             Element titleElement = doc.selectFirst("h1");
             if (titleElement != null) {
                 manga.setTitle(titleElement.text().trim());
             }
             
-            // Parse alternative titles (skip for now - no setter in Manga model)
             // Element altTitleElement = doc.selectFirst("h2.alternative-title");
             
-            // Parse author
             Element authorElement = doc.selectFirst("div.author span[itemprop=author]");
             if (authorElement != null) {
                 String author = authorElement.text().trim();
@@ -183,10 +174,8 @@ public class MgekoSource implements MangaSource {
                 manga.setArtist(manga.getAuthor()); // Usually same
             }
             
-            // Parse cover image
             Element coverElement = doc.selectFirst("div.rank img");
             if (coverElement == null) {
-                // Fallback to meta tag
                 coverElement = doc.selectFirst("meta[property=og:image]");
                 if (coverElement != null) {
                     String coverUrl = coverElement.attr("content");
@@ -199,18 +188,15 @@ public class MgekoSource implements MangaSource {
                 if (coverUrl.isEmpty()) {
                     coverUrl = coverElement.attr("data-src");
                 }
-                // Make absolute URL if relative
                 if (!coverUrl.isEmpty() && !coverUrl.startsWith("http")) {
                     coverUrl = BASE_URL + coverUrl;
                 }
                 manga.setCoverUrl(coverUrl);
             }
             
-            // Parse description from p.description
             Element descElement = doc.selectFirst("p.description");
             if (descElement != null) {
                 String description = descElement.text().trim();
-                // Clean up common prefixes in description
                 if (description.contains("The Summary is")) {
                     int summaryIndex = description.indexOf("The Summary is");
                     description = description.substring(summaryIndex + "The Summary is".length()).trim();
@@ -218,7 +204,6 @@ public class MgekoSource implements MangaSource {
                 manga.setDescription(description);
             }
             
-            // Parse categories/genres from div.categories
             Elements genreElements = doc.select("div.categories a");
             List<String> genres = new ArrayList<>();
             for (Element genre : genreElements) {
@@ -229,14 +214,12 @@ public class MgekoSource implements MangaSource {
             }
             manga.setGenres(genres);
             
-            // Parse status
             Element statusElement = doc.selectFirst("div.status span:last-child");
             if (statusElement != null) {
                 String status = statusElement.text().trim();
                 manga.setStatus(mapStatus(status));
             }
             
-            // Parse rating (skip for now - no setter in Manga model)
             // Element ratingElement = doc.selectFirst("span[itemprop=ratingValue]");
             
             return Optional.of(manga);
@@ -256,7 +239,6 @@ public class MgekoSource implements MangaSource {
 
             Document doc = fetchDocument(url);
             
-            // Parse chapter list: ul.chapter-list > li
             Elements chapterElements = doc.select("ul.chapter-list > li");
             
             Logger.info("MgekoSource", "Found " + chapterElements.size() + " chapter elements");
@@ -283,13 +265,11 @@ public class MgekoSource implements MangaSource {
     public List<String> getChapterPages(String mangaId, String chapterId) {
         List<String> pages = new ArrayList<>();
         try {
-            // chapterId is the chapter URL path (e.g., "/reader/en/manga-slug-chapter-56/")
             String url = BASE_URL + chapterId;
             Logger.info("MgekoSource", "Getting chapter pages: " + url);
 
             Document doc = fetchDocument(url);
             
-            // Parse images from the reader page
             // MangaGeko uses: <div class="page-in"><img onerror="..." src="actual-image-url"></div>
             Elements imageElements = doc.select(".page-in img[onerror]");
             
@@ -299,7 +279,6 @@ public class MgekoSource implements MangaSource {
                 String imageUrl = img.attr("src");
                 
                 if (!imageUrl.isEmpty() && !imageUrl.contains("loading.gif") && !imageUrl.contains("placeholder")) {
-                    // Make absolute URL if needed
                     if (!imageUrl.startsWith("http")) {
                         imageUrl = BASE_URL + imageUrl;
                     }
@@ -350,13 +329,11 @@ public class MgekoSource implements MangaSource {
         try {
             Manga manga = new Manga();
             
-            // Extract link element
             Element linkElement = element.selectFirst("a");
             if (linkElement == null) {
                 return null;
             }
             
-            // Extract manga slug from href
             String href = linkElement.attr("href");
             if (!href.startsWith("/manga/")) {
                 return null;
@@ -366,23 +343,19 @@ public class MgekoSource implements MangaSource {
             manga.setId(slug);
             manga.setSource(NAME);
             
-            // Extract title from h4.novel-title
             Element titleElement = element.selectFirst("h4.novel-title, .novel-title");
             if (titleElement != null) {
                 manga.setTitle(titleElement.text().trim());
             } else {
-                // Fallback to link title attribute
                 manga.setTitle(linkElement.attr("title"));
             }
             
-            // Extract cover image (check data-src first, then src)
             Element imgElement = element.selectFirst(".novel-cover img, img");
             if (imgElement != null) {
                 String coverUrl = imgElement.attr("data-src");
                 if (coverUrl.isEmpty()) {
                     coverUrl = imgElement.attr("src");
                 }
-                // Make absolute URL if relative
                 if (!coverUrl.isEmpty() && !coverUrl.startsWith("http")) {
                     coverUrl = BASE_URL + coverUrl;
                 }
@@ -410,22 +383,17 @@ public class MgekoSource implements MangaSource {
             Chapter chapter = new Chapter();
             chapter.setMangaId(mangaId);
             
-            // Extract chapter URL from <a> tag
             Element linkElement = element.selectFirst("a");
             if (linkElement != null) {
                 String chapterUrl = linkElement.attr("href");
                 chapter.setId(chapterUrl); // Store full path as ID (e.g., "/reader/en/...")
                 
-                // Extract chapter title/name
                 Element chapterTitleElement = linkElement.selectFirst(".chapter-title, .chapter-number");
                 if (chapterTitleElement != null) {
                     String chapterText = chapterTitleElement.ownText().trim();
-                    // Remove "-eng-li" suffix if present
                     chapterText = chapterText.replace("-eng-li", "");
                     
-                    // Try to extract chapter number
                     try {
-                        // Extract number from text like "43" or "43.5"
                         String numberStr = chapterText.replaceAll("[^0-9.]", "");
                         if (!numberStr.isEmpty()) {
                             chapter.setNumber(Float.parseFloat(numberStr));
@@ -450,8 +418,6 @@ public class MgekoSource implements MangaSource {
                 }
             }
             
-            // Extract upload date (Chapter model doesn't have uploadDate field)
-            // Could be added to chapter title if needed
             
             return chapter;
         } catch (Exception e) {
@@ -484,7 +450,6 @@ public class MgekoSource implements MangaSource {
 
     @Override
     public String getCoverUrl(String mangaId) {
-        // For mgeko, we need to fetch the manga page to get cover URL
         try {
             Optional<Manga> manga = getMangaDetails(mangaId);
             if (manga.isPresent()) {

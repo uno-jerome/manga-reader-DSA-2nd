@@ -52,8 +52,6 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
     private Consumer<Manga> onMangaSelectedCallback;
     private Runnable onAddSeriesCallback;
 
-    // Responsive grid configuration
-    // The grid automatically adjusts columns based on available width
     private int columns = 5;
     private final int CARD_WIDTH = 180;
     private final int CARD_HEIGHT = 270;
@@ -278,12 +276,8 @@ public class LibraryView extends BorderPane implements ThemeManager.ThemeChangeL
         titleLabel.setMaxWidth(CARD_WIDTH);
         titleLabel.setStyle(String.format("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: %s;", textColor));
 
-        // Default values shown when no reading progress exists
         String progressText = "Progress: 0/0 chapters";
-        String readingStatusText = "Plan to Read";
-
-        // Fetch actual reading progress from library service
-        // This includes: chapters read, total chapters, current chapter, and status
+        String readingStatusText = "Plan to Read";        // This includes: chapters read, total chapters, current chapter, and status
         try {
             double progress = libraryService.getReadingProgress(manga.getId());
             Optional<LibraryService.ReadingPosition> position = libraryService.getReadingPosition(manga.getId());

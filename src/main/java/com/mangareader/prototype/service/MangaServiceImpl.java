@@ -37,15 +37,9 @@ public class MangaServiceImpl {
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
         this.dataDir = Paths.get(System.getProperty("user.home"), ".houdoku");
-        this.libraryFile = dataDir.resolve("library.json");
-
-        // Initialize all available sources
-        this.sources = new ArrayList<>();
+        this.libraryFile = dataDir.resolve("library.json");        this.sources = new ArrayList<>();
         this.sources.add(new MangaDexSource());
-        this.sources.add(new MgekoSource());
-        
-        // Default to MangaDex as primary source
-        this.currentSource = this.sources.get(0);
+        this.sources.add(new MgekoSource());        this.currentSource = this.sources.get(0);
         
         Logger.info("MangaServiceImpl", "Initialized with " + sources.size() + " sources: " +
                 sources.stream().map(MangaSource::getName).toList());
@@ -135,9 +129,7 @@ public class MangaServiceImpl {
 
     public Optional<Manga> getMangaById(String id) {
         Manga manga = library.get(id);
-        if (manga == null) {
-            // Try current source
-            return currentSource.getMangaDetails(id);
+        if (manga == null) {            return currentSource.getMangaDetails(id);
         }
         return Optional.of(manga);
     }
@@ -146,10 +138,7 @@ public class MangaServiceImpl {
         Manga manga = library.get(mangaId);
         if (manga != null && !manga.getChapters().isEmpty()) {
             return manga.getChapters();
-        }
-        
-        // Get chapters from the manga's source
-        MangaSource source = getSourceForManga(manga);
+        }        MangaSource source = getSourceForManga(manga);
         return source.getChapters(mangaId);
     }
 
@@ -161,11 +150,9 @@ public class MangaServiceImpl {
     }
 
     public void downloadChapter(Chapter chapter) {
-        // Get source for this manga
         Manga manga = library.get(chapter.getMangaId());
         MangaSource source = getSourceForManga(manga);
         
-        // Get page URLs (will be used for actual download implementation later)
         source.getChapterPages(chapter.getMangaId(), chapter.getId());
         
         Path chapterDir = dataDir.resolve("downloads")
@@ -217,9 +204,7 @@ public class MangaServiceImpl {
         Manga manga = library.get(mangaId);
         if (manga != null) {
             return Optional.of(manga);
-        }
-        // Try current source
-        return currentSource.getMangaDetails(mangaId);
+        }        return currentSource.getMangaDetails(mangaId);
     }
 
     public String getCoverUrl(String mangaId) {
@@ -227,7 +212,6 @@ public class MangaServiceImpl {
         if (manga != null && manga.getCoverUrl() != null && !manga.getCoverUrl().isEmpty()) {
             return manga.getCoverUrl();
         }
-        // Get from manga's source
         MangaSource source = getSourceForManga(manga);
         return source.getCoverUrl(mangaId);
     }
@@ -251,8 +235,6 @@ public class MangaServiceImpl {
                     return source;
                 }
             }
-        }
-        // Default to current source
-        return currentSource;
+        }        return currentSource;
     }
 }

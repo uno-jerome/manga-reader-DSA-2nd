@@ -66,7 +66,6 @@ public class MangaDexSource implements MangaSource {
                 if (status >= 200 && status < 300) {
                     String responseBody = EntityUtils.toString(response.getEntity());
                     System.out.println("API Response received with status: " + status);
-                    // Print a small preview of the response for debugging
                     if (responseBody.length() > 500) {
                         System.out.println("Response preview: " + responseBody.substring(0, 500) + "...");
                     } else {
@@ -451,15 +450,8 @@ public class MangaDexSource implements MangaSource {
         Manga manga = new Manga();
         JsonNode attributes = node.path("attributes");
         manga.setId(node.path("id").asText());
-        manga.setSource(getName()); // Set source to "MangaDex"
-        
-        // Extract title with fallback to multiple languages
-        // MangaDex API returns titles as: {"en": "Title", "ja": "タイトル", "ja-ro": "Romaji"}
-        String title = extractLocalizedString(attributes.path("title"));
-        manga.setTitle(title != null && !title.isEmpty() ? title : "Unknown Title");
-        
-        // Extract description with same fallback mechanism
-        String description = extractLocalizedString(attributes.path("description"));
+        manga.setSource(getName());        String title = extractLocalizedString(attributes.path("title"));
+        manga.setTitle(title != null && !title.isEmpty() ? title : "Unknown Title");        String description = extractLocalizedString(attributes.path("description"));
         manga.setDescription(description != null && !description.isEmpty() ? description : "No description available");
         
         manga.setStatus(attributes.path("status").asText());
@@ -554,15 +546,12 @@ public class MangaDexSource implements MangaSource {
                     try {
                         chapter.setNumber(Double.parseDouble(chapterNode.asText()));
                     } catch (NumberFormatException e) {
-                        chapter.setNumber(0.0); // Default to 0 if parsing fails
-                        System.err.println("Error parsing chapter number: " + e.getMessage());
+                        chapter.setNumber(0.0);                        System.err.println("Error parsing chapter number: " + e.getMessage());
                     }
                 } else {
-                    chapter.setNumber(0.0); // Default to 0
-                }
+                    chapter.setNumber(0.0);                }
             } else {
-                chapter.setNumber(0.0); // Default to 0
-            }
+                chapter.setNumber(0.0);            }
 
             if (attributes.has("volume")) {
                 JsonNode volumeNode = attributes.get("volume");
@@ -601,20 +590,14 @@ public class MangaDexSource implements MangaSource {
         }
 
         // Priority order: English, English-US, Romanized Japanese, Japanese, then any other
-        String[] preferredLanguages = { "en", "en-us", "ja-ro", "ja" };
-
-        // Try preferred languages first
-        for (String lang : preferredLanguages) {
+        String[] preferredLanguages = { "en", "en-us", "ja-ro", "ja" };        for (String lang : preferredLanguages) {
             if (node.has(lang)) {
                 String value = node.get(lang).asText();
                 if (value != null && !value.isEmpty()) {
                     return value;
                 }
             }
-        }
-
-        // If no preferred language found, try any available language
-        if (node.isObject()) {
+        }        if (node.isObject()) {
             var fields = node.fields();
             while (fields.hasNext()) {
                 var entry = fields.next();

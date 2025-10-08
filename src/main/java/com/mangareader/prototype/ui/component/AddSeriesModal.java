@@ -42,8 +42,7 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
     private final TextField addTagField;
     private final TextField languageField; // Changed from ComboBox since it's read-only
     private final TextField statusField; // Changed from ComboBox since it's read-only
-    private TextField coverUrlField; // Added coverUrlField as a class member
-
+    private TextField coverUrlField;
     public AddSeriesModal(Manga manga) {
         this.mangaService = MangaServiceImpl.getInstance();
         this.themeManager = ThemeManager.getInstance();
@@ -110,31 +109,27 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         titleField = new TextField(manga.getTitle());
         titleField.setPromptText("Title");
         titleField.setPrefColumnCount(30);
-        titleField.setEditable(false); // Make title read-only
-        titleField.setFocusTraversable(false);
+        titleField.setEditable(false);        titleField.setFocusTraversable(false);
 
         descriptionArea = new TextArea(manga.getDescription());
         descriptionArea.setPromptText("Description");
         descriptionArea.setWrapText(true);
         descriptionArea.setPrefRowCount(6);
         descriptionArea.setPrefColumnCount(30);
-        descriptionArea.setEditable(false); // Make description read-only
-        descriptionArea.setFocusTraversable(false);
+        descriptionArea.setEditable(false);        descriptionArea.setFocusTraversable(false);
 
         String authorText = manga.getAuthor() != null ? manga.getAuthor() : "";
         authorsField = new TextField(authorText);
         authorsField.setPromptText("Author(s)");
         authorsField.setPrefColumnCount(30);
-        authorsField.setEditable(false); // Make non-editable since data is from MangaDex
-        authorsField.setFocusTraversable(false);
+        authorsField.setEditable(false);        authorsField.setFocusTraversable(false);
         System.out.println("Setting author field text: " + authorText);
 
         String artistText = manga.getArtist() != null ? manga.getArtist() : "";
         artistsField = new TextField(artistText);
         artistsField.setPromptText("Artist(s)");
         artistsField.setPrefColumnCount(30);
-        artistsField.setEditable(false); // Make non-editable since data is from MangaDex
-        artistsField.setFocusTraversable(false);
+        artistsField.setEditable(false);        artistsField.setFocusTraversable(false);
         System.out.println("Setting artist field text: " + artistText);
 
         tagsFlowPane = new FlowPane(5, 5); // Reduced spacing for tighter layout
@@ -145,8 +140,7 @@ public class AddSeriesModal extends Dialog<Manga> implements ThemeManager.ThemeC
         if (manga.getGenres() != null) {
             manga.getGenres().forEach(this::addTagChip);
         }
-        tagsFlowPane.setDisable(true); // Make tags field non-editable
-
+        tagsFlowPane.setDisable(true);
         ScrollPane tagsScrollPane = new ScrollPane(tagsFlowPane);
         tagsScrollPane.setFitToWidth(true);
         double estimatedHeight = calculateTagsHeight();

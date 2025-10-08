@@ -111,7 +111,6 @@ public class MainView extends BorderPane implements ThemeManager.ThemeChangeList
 
         contentArea.getChildren().clear();
         
-        // Reuse existing AddSeriesView to preserve source selection
         if (currentAddSeriesView == null) {
             currentAddSeriesView = new AddSeriesView(this::showMangaDetailView);
         }
