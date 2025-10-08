@@ -18,17 +18,17 @@ data/
 cache/
 logs/
 
-# Configuration files (may contain sensitive data)
-config/
 
 # Temporary files
 *.tmp
 *.temp
 *.log
+*.pdf
 
 # HTML test files
 *.html
-
+DSA_PRESENTATION_SCRIPT.md
+DSA_PRESENTATION.md
 # Python files
 *.py
 *.pyc
