@@ -85,6 +85,7 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
     private final MangaServiceImpl mangaService;
     private final LibraryService libraryService;
     private final Consumer<Chapter> onChapterSelectedCallback;
+    private final Runnable onBackCallback;
     private Manga currentManga;
     private final ObservableList<Chapter> chapters = FXCollections.observableArrayList();
     private final FilteredList<Chapter> filteredChapters = new FilteredList<>(chapters, p -> true);
@@ -104,6 +105,7 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
 
     public MangaDetailView(Consumer<Chapter> onChapterSelectedCallback, Runnable onBackCallback) {
         this.onChapterSelectedCallback = onChapterSelectedCallback;
+        this.onBackCallback = onBackCallback;
         this.mangaService = MangaServiceImpl.getInstance();
         this.libraryService = LibraryService.getInstance();
         this.themeManager = ThemeManager.getInstance();
@@ -464,6 +466,9 @@ public class MangaDetailView extends BorderPane implements ThemeManager.ThemeCha
                         "-fx-padding: 10 20; " +
                         "-fx-background-radius: 5;");
         backButton.setOnAction(e -> {
+            if (onBackCallback != null) {
+                onBackCallback.run();
+            }
         });
 
         VBox completeLayout = new VBox(15);

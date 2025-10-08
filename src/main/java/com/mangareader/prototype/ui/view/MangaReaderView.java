@@ -298,14 +298,14 @@ public class MangaReaderView extends BorderPane {
         saveReadingMode();
 
         if (isWebtoonMode) {
-            modeToggleButton.setText("ðŸ“œ Webtoon");
+            modeToggleButton.setText("Webtoon");
             setCenter(webtoonScrollPane);
             setupWebtoonView();
             prevButton.setVisible(false);
             nextButton.setVisible(false);
             pageInfoLabel.setVisible(false);
         } else {
-            modeToggleButton.setText("ðŸ“– Traditional");
+            modeToggleButton.setText("Traditional");
             setCenter(imageContainer);
             displayCurrentPage();
             prevButton.setVisible(true);

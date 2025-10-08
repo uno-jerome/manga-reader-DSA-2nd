@@ -184,29 +184,48 @@ public class MgekoSource implements MangaSource {
             }
             
             // Parse cover image
-            Element coverElement = doc.selectFirst("img[alt=" + manga.getTitle() + "]");
+            Element coverElement = doc.selectFirst("div.rank img");
             if (coverElement == null) {
-                coverElement = doc.selectFirst("div.rank img");
-            }
-            if (coverElement != null) {
+                // Fallback to meta tag
+                coverElement = doc.selectFirst("meta[property=og:image]");
+                if (coverElement != null) {
+                    String coverUrl = coverElement.attr("content");
+                    if (!coverUrl.isEmpty()) {
+                        manga.setCoverUrl(coverUrl);
+                    }
+                }
+            } else {
                 String coverUrl = coverElement.attr("src");
                 if (coverUrl.isEmpty()) {
                     coverUrl = coverElement.attr("data-src");
                 }
+                // Make absolute URL if relative
+                if (!coverUrl.isEmpty() && !coverUrl.startsWith("http")) {
+                    coverUrl = BASE_URL + coverUrl;
+                }
                 manga.setCoverUrl(coverUrl);
             }
             
-            // Parse description
-            Element descElement = doc.selectFirst("div.summary p");
+            // Parse description from p.description
+            Element descElement = doc.selectFirst("p.description");
             if (descElement != null) {
-                manga.setDescription(descElement.text().trim());
+                String description = descElement.text().trim();
+                // Clean up common prefixes in description
+                if (description.contains("The Summary is")) {
+                    int summaryIndex = description.indexOf("The Summary is");
+                    description = description.substring(summaryIndex + "The Summary is".length()).trim();
+                }
+                manga.setDescription(description);
             }
             
-            // Parse genres/tags
-            Elements genreElements = doc.select("div.genres a, div.tags a");
+            // Parse categories/genres from div.categories
+            Elements genreElements = doc.select("div.categories a");
             List<String> genres = new ArrayList<>();
             for (Element genre : genreElements) {
-                genres.add(genre.text().trim());
+                String genreText = genre.text().trim();
+                if (!genreText.isEmpty() && !genreText.equalsIgnoreCase("Categories")) {
+                    genres.add(genreText);
+                }
             }
             manga.setGenres(genres);
             

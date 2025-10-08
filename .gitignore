@@ -26,6 +26,9 @@ config/
 *.temp
 *.log
 
+# HTML test files
+*.html
+
 # Python files
 *.py
 *.pyc

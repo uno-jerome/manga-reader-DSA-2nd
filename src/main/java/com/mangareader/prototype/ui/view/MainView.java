@@ -32,6 +32,7 @@ public class MainView extends BorderPane implements ThemeManager.ThemeChangeList
     private final ToolBar topBar;
     private final ThemeManager themeManager;
     private LibraryView currentLibraryView;
+    private AddSeriesView currentAddSeriesView;
     private boolean programmaticSelection = false;
 
     private enum NavigationSource {
@@ -109,7 +110,13 @@ public class MainView extends BorderPane implements ThemeManager.ThemeChangeList
         currentNavigationSource = NavigationSource.ADD_SERIES;
 
         contentArea.getChildren().clear();
-        contentArea.getChildren().add(new AddSeriesView(this::showMangaDetailView));
+        
+        // Reuse existing AddSeriesView to preserve source selection
+        if (currentAddSeriesView == null) {
+            currentAddSeriesView = new AddSeriesView(this::showMangaDetailView);
+        }
+        
+        contentArea.getChildren().add(currentAddSeriesView);
     }
 
     private void showMangaDetailView(Manga manga) {
