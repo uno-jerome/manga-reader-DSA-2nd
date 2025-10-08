@@ -8,7 +8,7 @@ target/
 *.iml
 *.ipr
 *.iws
-
+.VSCodeCounter/
 # OS files
 .DS_Store
 Thumbs.db
