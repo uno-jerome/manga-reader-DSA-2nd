@@ -1,7 +1,7 @@
-# Manga Reader
+# Manga Reader w/o mangageko
 
 A desktop manga reader application built with JavaFX that lets you browse, read, and manage manga from MangaDex.
-
+w/o mangageko
 ## Features
 
 - Browse and search manga from MangaDex
