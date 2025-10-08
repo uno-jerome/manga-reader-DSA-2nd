@@ -1,0 +1,220 @@
+/* Common Base Styles - Shared across all themes */
+/* Only structure, spacing, and non-color properties */
+
+/* Font specifications */
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* Buttons - Structure only */
+.button {
+    -fx-border-width: 1px;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-padding: 8 16;
+    -fx-font-size: 14px;
+}
+
+.button:focused {
+    -fx-border-width: 2px;
+}
+
+/* Text fields - Structure only */
+.text-field {
+    -fx-border-width: 1px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-padding: 8 12;
+}
+
+.text-field:focused {
+    -fx-border-width: 2px;
+}
+
+/* Text areas - Structure only */
+.text-area {
+    -fx-border-width: 1px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+}
+
+/* Tree view structure */
+.tree-view .tree-cell {
+    -fx-padding: 8px;
+}
+
+/* List view structure */
+.list-view .list-cell {
+    -fx-padding: 8px;
+}
+
+/* Toolbar structure */
+.tool-bar {
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 8px;
+}
+
+.tool-bar .button {
+    -fx-padding: 8px 16px;
+}
+
+/* Combo boxes - Structure only */
+.combo-box {
+    -fx-border-width: 1px;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+}
+
+.combo-box:focused {
+    -fx-border-width: 2px;
+}
+
+/* Check boxes - Structure only */
+.check-box .box {
+    -fx-border-width: 1px;
+    -fx-background-radius: 3px;
+    -fx-border-radius: 3px;
+}
+
+/* Separators - Structure only */
+.separator .line {
+    -fx-border-width: 1px 0 0 0;
+}
+
+/* Manga card structure */
+.manga-card {
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0, 0, 2);
+    -fx-padding: 0;
+}
+
+.manga-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 12, 0, 0, 4);
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
+
+/* High-quality cover images */
+.cover-image {
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-smooth: true;
+    -fx-cache: true;
+}
+
+/* Empty state structure */
+.empty-state {
+    -fx-alignment: center;
+    -fx-spacing: 16;
+}
+
+.empty-state .title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.empty-state .subtitle {
+    -fx-font-size: 16px;
+}
+
+.empty-state .icon {
+    -fx-font-size: 48px;
+}
+
+.empty-state .message {
+    -fx-font-size: 16px;
+}
+
+/* Progress bars - Structure only */
+.progress-bar .bar {
+    -fx-background-radius: 4px;
+}
+
+/* Context menus - Structure only */
+.context-menu {
+    -fx-border-width: 1px;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 4);
+}
+
+/* Tooltips - Structure only */
+.tooltip {
+    -fx-border-width: 1px;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-font-size: 12px;
+}
+
+/* Dialog panes - Structure only */
+.dialog-pane {
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+.dialog-pane .header-panel {
+    -fx-border-width: 0 0 1px 0;
+}
+
+.dialog-pane .button-bar {
+    -fx-border-width: 1px 0 0 0;
+}
+
+/* Sidebar structure */
+.sidebar {
+    -fx-padding: 15;
+    -fx-spacing: 10;
+}
+
+.sidebar .tree-view {
+    -fx-background-radius: 4;
+    -fx-padding: 8;
+    -fx-font-size: 14px;
+}
+
+.sidebar .tree-view .tree-cell {
+    -fx-padding: 6 12;
+    -fx-background-radius: 4;
+}
+
+.sidebar .list-view {
+    -fx-background-radius: 4;
+    -fx-padding: 8;
+    -fx-font-size: 14px;
+}
+
+.sidebar .list-view .list-cell {
+    -fx-padding: 6 12;
+    -fx-background-radius: 4;
+}
+
+/* AddSeriesView manga cards - Structure only */
+.manga-card {
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(gaussian, #000, 4, 0, 0, 2);
+}
+
+/* AddSeriesView advanced search components - Structure only */
+.advanced-search-pane {
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+}
+
+.filter-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.filter-checkbox {
+    -fx-padding: 5px;
+}
+
+.filter-combobox {
+    -fx-border-width: 1px;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+}

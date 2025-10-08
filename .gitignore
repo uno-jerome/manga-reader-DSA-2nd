@@ -1,0 +1,35 @@
+# Build directories
+target/
+*.class
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Application data (should not be tracked)
+data/
+cache/
+logs/
+.VSCodeCounter/
+out/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Python files
+*.py
+*.pyc
+__pycache__/
+
+# Maven wrapper
+!.mvn/wrapper/maven-wrapper.jar
+.github/
