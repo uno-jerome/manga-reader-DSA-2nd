@@ -2,7 +2,7 @@
 
 Project: Manga Reader Application  
 Language: Java (JavaFX), Maven  
-Java version: Currently JDK 17 in pom.xml; upgrade target JDK 21  
+Java version:JDK 17 
 Focus: Data Structures, Algorithms, Caching, Concurrency
 
 ---
