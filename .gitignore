@@ -9,6 +9,7 @@ target/
 *.ipr
 *.iws
 .VSCodeCounter/
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -24,6 +25,8 @@ logs/
 *.temp
 *.log
 *.pdf
+DSA_PRESENTATION_SCRIPT_PARAGRAPH.md
+DSA_PRESENTATION_SCRIPT_SECTIONS.md
 
 # HTML test files
 *.html
