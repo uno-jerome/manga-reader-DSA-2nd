@@ -200,15 +200,26 @@ private String getCacheFileName(String url) {
      - Expected: `isInLibrary(id)` O(1) true for existing, false otherwise.
      - Actual: Operations constant-time under concurrent access.
 
-- Screenshots:
-  - **Library grid view**: ![Library Grid](docs/images/library-grid.png)
+ - Screenshots:
+  - **Library grid:**
+    - Default/Dark: ![Library Grid](docs/images/library-grid.png)
+    - Light theme: ![Library Grid (Light)](docs/images/library-grid-light-mode.png)
+  - **Add Series flow:**
+    - ![Add Series 0](docs/images/add-series-0.png)
+    - ![Add Series 1](docs/images/add-series-1.png)
+    - ![Add Series 2](docs/images/add-series-2.png)
   - **Manga detail view:** ![Manga Detail](docs/images/manga-detail.png)
+  - **View Series (modal):** ![View Series Modal](docs/images/view-series-modal.png)
   - **Reader view:** ![Reader View](docs/images/reader-view.png)
-  - **Chapter filter demos**:
+  - **Chapter filter demos:**
     - ![Chapter Filter 0](docs/images/chapter-filter-0.png)
     - ![Chapter Filter 1](docs/images/chapter-filter-1.png)
     - ![Chapter Filter 2](docs/images/chapter-filter-2.png)
     - ![Chapter Filter 3](docs/images/chapter-filter-3.png)
+  - **Settings:**
+    - ![Settings 1](docs/images/settings-1.png)
+    - ![Settings 2](docs/images/settings-2.png)
+    - ![Settings – Clear Cache](docs/images/settings-3-clear-cache.png)
 
 
 ---
