@@ -184,10 +184,10 @@ private String getCacheFileName(String url) {
      - Actual: Operations constant-time under concurrent access.
 
 - Screenshots:
-  - Library grid view: ![Library Grid](docs/images/library-grid.png)
-  - Manga detail view: ![Manga Detail](docs/images/manga-detail.png)
-  - Reader view: ![Reader View](docs/images/reader-view.png)
-  - Chapter filter demos:
+  - **Library grid view**: ![Library Grid](docs/images/library-grid.png)
+  - **Manga detail view:** ![Manga Detail](docs/images/manga-detail.png)
+  - **Reader view:** ![Reader View](docs/images/reader-view.png)
+  - **Chapter filter demos**:
     - ![Chapter Filter 0](docs/images/chapter-filter-0.png)
     - ![Chapter Filter 1](docs/images/chapter-filter-1.png)
     - ![Chapter Filter 2](docs/images/chapter-filter-2.png)
