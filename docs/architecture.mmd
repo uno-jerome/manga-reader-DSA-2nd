@@ -1,0 +1,53 @@
+graph TD
+  %% UI Layer
+  subgraph UI[JavaFX UI]
+    LV[LibraryView]
+    MDV[MangaDetailView]
+    MRV[MangaReaderView]
+    LV --> MDV
+    MDV --> MRV
+  end
+
+  %% Services
+  LS[LibraryService]
+  MSI[MangaServiceImpl]
+  TPM[ThreadPoolManager]
+  IC[ImageCache\n(Memory: ConcurrentHashMap)]
+
+  %% Sources
+  subgraph Sources
+    S1[MangaDexSource]
+    S2[MgekoSource]
+  end
+
+  %% Persistence & Network
+  LIB[(data/library.json\nJackson)]
+  DISK[(cache/images\nDisk Cache)]
+  NET[(Network HTTP)]
+
+  %% UI -> Services
+  LV --> LS
+  MDV --> LS
+  MRV --> LS
+  LV --> MSI
+  MDV --> MSI
+  MRV --> MSI
+
+  %% Library persistence
+  LS <--> LIB
+
+  %% Multi-source search/fetch
+  MSI --> S1
+  MSI --> S2
+
+  %% Image loading flow
+  MRV --> IC
+  IC -->|miss| DISK
+  DISK -->|hit| IC
+  DISK -->|miss| NET
+  NET --> IC
+  IC --> MRV
+
+  %% Concurrency
+  TPM --> MSI
+  TPM --> IC
