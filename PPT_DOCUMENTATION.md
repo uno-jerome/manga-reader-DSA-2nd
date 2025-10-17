@@ -19,9 +19,9 @@ Focus: Data Structures, Algorithms, Caching, Concurrency
 
 ## 2. Objectives
 
-- Implement a responsive reader backed by efficient data structures:
-  - O(1) library lookups via ConcurrentHashMap.
-  - Predicate-based filtering and comparator-based sorting for chapters.
+ - Implement a responsive reader backed by efficient data structures:
+  - O(1) library lookups via a thread-safe map (ConcurrentHashMap).
+  - Rule-based filtering and sorting for chapters.
   - Two-level image cache (memory + disk) with MD5 file hashing.
   - Thread pool + blocking queue for background tasks.
 - Measurable targets:
@@ -36,19 +36,16 @@ Focus: Data Structures, Algorithms, Caching, Concurrency
 - System Concept: JavaFX desktop app; domain services fetch from pluggable sources implementing `MangaSource`. Images are cached; library persists to JSON.
 - Users: End-user readers managing a local library and reading chapters.
 - System Requirements:
-  - Software: JDK 21, Maven 3.8+, Internet (for online sources).
+  - Software: JDK 17, Maven 3.8+, Internet (for online sources).
   - Libraries: JavaFX, Jackson (JSON), Java Concurrency utils.
   - Files: `pom.xml`, data at `data/library.json`, cache at `cache/images/`.
 
-- Note on Java version: `pom.xml` sets `<maven.compiler.source>` and `<target>` to 17. When upgrading to JDK 21, update those to 21 and ensure your toolchain uses JDK 21.
-
-  
 
 ---
 
 ## 4. Data Structures Used
 
-1) ConcurrentHashMap
+1) ConcurrentHashMap (thread-safe map)
 - Where: `LibraryService` (library map), `ImageCache` (memory image cache).
 - Purpose: Thread-safe O(1) average add/get/remove during concurrent background tasks.
 - Justification: Avoids global lock contention of synchronized maps; safe vs. non-thread-safe `HashMap`.
@@ -56,17 +53,17 @@ Focus: Data Structures, Algorithms, Caching, Concurrency
 2) FilteredList and SortedList (JavaFX Collections)
 - Where: UI lists (e.g., chapters in views).
 - Purpose: Live filtering and sorting without duplicating collections.
-- Justification: Stable, adaptive sorting (TimSort) and efficient predicate updates.
+- Justification: Stable, faster when the list is almost sorted (TimSort) and efficient filter-rule updates.
 
 3) ArrayList
 - Where: `MangaServiceImpl` sources list, in-memory lists of manga/chapters.
 - Purpose: Cache ordered results; fast iteration and indexed access.
 - Justification: Amortized O(1) append; better cache locality than linked lists.
 
-4) LinkedBlockingQueue + ThreadPoolExecutor
+4) Task queue (LinkedBlockingQueue) + ThreadPoolExecutor
 - Where: `ThreadPoolManager.java` (background image/tasks).
 - Purpose: FIFO task scheduling; bounded queue protects memory.
-- Justification: Keeps UI responsive; backpressure under load.
+- Justification: Keeps UI responsive; prevents overload under heavy work.
 
 5) HashMap (UI node cache)
 - Where: View-level caches of JavaFX nodes (e.g., `AddSeriesView` cover tiles) to avoid expensive recreation.
@@ -78,7 +75,7 @@ Focus: Data Structures, Algorithms, Caching, Concurrency
 ## 5. Algorithm Design
 
 1) Chapter Filtering + Sorting
-- Idea: Predicate-based linear scan, then comparator sort per selected mode (newest/oldest/by volume).
+- Idea: Check each item using a filter rule, then apply a sorting rule per selected mode (newest/oldest/by volume).
 - Pseudocode:
 ```
 filterChapters(searchText, volumeFilter):
@@ -87,6 +84,13 @@ filterChapters(searchText, volumeFilter):
   filtered := chapters where p1 && p2
   sort filtered with comparator per mode
 ```
+
+- Step-by-step:
+  1. Normalize search text (lowercase).
+  2. Build a text filter rule (match in title or number).
+  3. Build a volume filter rule based on dropdown selection.
+  4. Combine filter rules (AND) and assign to FilteredList.
+  5. Apply a sorting rule based on the selected option.
 
 2) Two-Level Image Cache Lookup
 - Idea: Check memory → disk → network, promoting on hit and persisting on download.
@@ -100,6 +104,13 @@ getImage(url, w, h):
   return placeholder
 ```
 
+- Step-by-step:
+  1. Lookup image URL in memory map (O(1)).
+  2. If miss, compute MD5 filename and check disk path.
+  3. Validate disk file (size > 1KB, decodes without error).
+  4. If valid, load and also store it in memory for next time.
+  5. If miss/corrupt, download from network and save to disk and memory.
+
 3) Multi-Source Search Aggregation
 - Idea: Iterate all `MangaSource` implementations and combine results.
 - Pseudocode:
@@ -112,12 +123,18 @@ searchAllSources(q):
   return results
 ```
 
+- Step-by-step:
+  1. Iterate registered sources in order.
+  2. For each, run `search(query)` on the API pool.
+  3. Collect results; on exception, log and continue.
+  4. Return combined list (optionally remove duplicates by ID).
+
 ---
 
 ## 6. Implementation
 
 - Language and Libraries
-  - Java 21, JavaFX.
+  - Java 17, JavaFX.
   - Jackson (JSON serialization), java.util.concurrent.
   - Maven build (`pom.xml`).
 
@@ -136,7 +153,7 @@ public boolean addToLibrary(Manga manga) {
 }
 ```
 
-Predicate filtering + sorting:
+Rule-based filtering + sorting:
 ```java
 // In views using JavaFX collections
 FilteredList<Chapter> filtered = new FilteredList<>(chapters, p -> true);
@@ -194,17 +211,12 @@ private String getCacheFileName(String url) {
     - ![Chapter Filter 3](docs/images/chapter-filter-3.png)
 
 
-- Assets to provide
-  - Preferred size: 1280×720 or 1600×900 for clarity.
-  - Naming: lowercase, hyphen-separated (as above) to avoid spaces.
-  - Keep sensitive info out of screenshots (usernames, paths, tokens).
-
 ---
 
 ## 8. Conclusion and Recommendations
 
 - Summary
-  - Achieved responsive UI with efficient DS/Algos: O(1) map lookups, adaptive sorting, real-time filtering, two-level image cache, and background execution.
+  - Achieved responsive UI with efficient DS/Algos: O(1) map lookups, faster sorting when lists are almost sorted, real-time filtering, two-level image cache, and background execution.
   - Network usage reduced drastically after cache warm-up.
 
 - Lessons Learned
