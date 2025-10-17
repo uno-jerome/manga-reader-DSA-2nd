@@ -62,7 +62,7 @@ Focus: Data Structures, Algorithms, Caching, Concurrency
     LS[LibraryService]
     MSI[MangaServiceImpl]
     TPM[ThreadPoolManager]
-    IC[ImageCache\n(Memory: ConcurrentHashMap)]
+    IC[ImageCache<br/>Memory: ConcurrentHashMap]
 
     %% Sources
     subgraph Sources
@@ -71,9 +71,9 @@ Focus: Data Structures, Algorithms, Caching, Concurrency
     end
 
     %% Persistence & Network
-    LIB[(data/library.json\nJackson)]
-    DISK[(cache/images\nDisk Cache)]
-    NET[(Network HTTP)]
+    LIB[data/library.json<br/>Jackson]
+    DISK[cache/images<br/>Disk Cache]
+    NET[Network HTTP]
 
     %% UI -> Services
     LV --> LS
@@ -242,12 +242,12 @@ private String getCacheFileName(String url) {
      - Expected: `isInLibrary(id)` O(1) true for existing, false otherwise.
      - Actual: Operations constant-time under concurrent access.
 
-- Screenshots (place your PNG/JPG files at `docs/images/` with these names):
+- Screenshots:
   - Library grid view: ![Library Grid](docs/images/library-grid.png)
   - Manga detail view: ![Manga Detail](docs/images/manga-detail.png)
   - Reader view: ![Reader View](docs/images/reader-view.png)
   - Chapter filter demo: ![Chapter Filter](docs/images/chapter-filter.png)
-  - Cache benchmark (cold vs warm): ![Cache Benchmark](docs/images/cache-benchmark.png)
+
 
 - Assets to provide
   - Preferred size: 1280×720 or 1600×900 for clarity.

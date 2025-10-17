@@ -7,12 +7,15 @@ graph TD
     LV --> MDV
     MDV --> MRV
   end
-
+Error: Parse error on line 12:
+...  IC[ImageCache<br/>(Memory: ConcurrentH
+-----------------------^
+Expecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'
   %% Services
   LS[LibraryService]
   MSI[MangaServiceImpl]
   TPM[ThreadPoolManager]
-  IC[ImageCache\n(Memory: ConcurrentHashMap)]
+  IC[ImageCache<br/>Memory: ConcurrentHashMap]
 
   %% Sources
   subgraph Sources
@@ -21,9 +24,9 @@ graph TD
   end
 
   %% Persistence & Network
-  LIB[(data/library.json\nJackson)]
-  DISK[(cache/images\nDisk Cache)]
-  NET[(Network HTTP)]
+  LIB[data/library.json<br/>Jackson]
+  DISK[cache/images<br/>Disk Cache]
+  NET[Network HTTP]
 
   %% UI -> Services
   LV --> LS

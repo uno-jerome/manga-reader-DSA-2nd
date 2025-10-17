@@ -93,7 +93,10 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
 
         setSpacing(16);
         setPadding(new Insets(24));
-        setAlignment(Pos.TOP_CENTER);        MangaServiceImpl mangaService = MangaServiceImpl.getInstance();
+        setAlignment(Pos.TOP_CENTER);
+
+        // Get sources from MangaServiceImpl (includes MangaDex, Mgeko, etc.)
+        MangaServiceImpl mangaService = MangaServiceImpl.getInstance();
         sources = new ArrayList<>(mangaService.getAllSources());
 
         sourceSelector = new ComboBox<>();
@@ -116,6 +119,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         });
         if (!sources.isEmpty()) {
             sourceSelector.getSelectionModel().selectFirst();
+            // Auto-load content from first source
             Platform.runLater(() -> autoLoadSourceContent());
         }
 
@@ -131,12 +135,14 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
                 if (searchField != null) {
                     String currentQuery = searchField.getText().trim();
                     if (!currentQuery.isEmpty()) {
+                        // Re-search with new source
                         searchParams.setQuery(currentQuery);
                         searchParams.setPage(1);
                         currentPage = 1;
                         pagination.setCurrentPageIndex(0);
                         performAdvancedSearch();
                     } else {
+                        // Auto-load popular content for any source
                         autoLoadSourceContent();
                     }
                 }
@@ -176,13 +182,17 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
                         "-fx-font-size: 14px;" +
                                 "-fx-text-fill: #666;" + // Text color remains gray
                                 "-fx-background-color: transparent;" +
-                                "-fx-mark-color: transparent;" +                                "-fx-box-fill: white;" + // White background for the checkbox box
+                                "-fx-mark-color: transparent;" + // Make checkmark transparent when unchecked
+                                "-fx-box-fill: white;" + // White background for the checkbox box
                                 "-fx-box-border: #ccc;" + // Gray border for the checkbox box
                                 "-fx-border-width: 1px;");
             }
 
             searchParams.setIncludeNsfw(newVal);
-        });        searchAllSourcesCheckbox = new CheckBox("All Sources");
+        });
+
+        // Add "Search All Sources" checkbox
+        searchAllSourcesCheckbox = new CheckBox("All Sources");
         searchAllSourcesCheckbox.setSelected(false);
         searchAllSourcesCheckbox.setTooltip(new Tooltip("Search all available sources (MangaDex, Mgeko, etc.)"));
         searchAllSourcesCheckbox.setStyle(
@@ -296,6 +306,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
 
         Platform.runLater(() -> themeManager.addThemeChangeListener(this));
 
+        // Auto-load content from selected source on initialization
         Platform.runLater(() -> {
             MangaSource selectedSource = sourceSelector.getValue();
             if (selectedSource != null) {
@@ -473,7 +484,9 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         mangaGrid.add(loadingBox, 0, 0, columns, 1);
     }
 
-    private void performAdvancedSearch() {        if (searchAllSourcesCheckbox.isSelected()) {
+    private void performAdvancedSearch() {
+        // Check if "Search All Sources" is enabled
+        if (searchAllSourcesCheckbox.isSelected()) {
             System.out.println("🔍 [DEBUG] All Sources mode - searching all sources");
             performMultiSourceSearch();
             return;
@@ -565,6 +578,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
             return;
         }
 
+        // Debug: Show source distribution
         System.out.println("📊 [DEBUG] Results breakdown:");
         mangaList.stream()
             .collect(java.util.stream.Collectors.groupingBy(
@@ -686,7 +700,9 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         Rectangle clip = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
         clip.setArcWidth(20);
         clip.setArcHeight(20);
-        imageContainer.setClip(clip);        if (manga.getSource() != null) {
+        imageContainer.setClip(clip);
+
+        if (manga.getSource() != null) {
             Label sourceBadge = new Label(manga.getSource());
             sourceBadge.setStyle(
                     "-fx-background-color: rgba(0, 0, 0, 0.7);" +
@@ -757,6 +773,7 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
         VBox.setMargin(titleBox, new Insets(5, 0, 0, 0));
 
         box.setOnMouseClicked(event -> {
+            // Get the correct source for this manga (use manga's source field)
             MangaSource mangaSource = null;
             if (manga.getSource() != null) {
                 for (MangaSource src : sources) {
@@ -765,7 +782,9 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
                         break;
                     }
                 }
-            }            if (mangaSource == null) {
+            }
+            // Fallback to currently selected source if manga source not found
+            if (mangaSource == null) {
                 mangaSource = sourceSelector.getValue();
             }
             
@@ -928,6 +947,8 @@ public class AddSeriesView extends VBox implements ThemeManager.ThemeChangeListe
     }
 
     private void updateAdvancedSearchPaneTheme() {
+        // CSS classes now handle all theme styling automatically
+        // No need to iterate through components
     }
 
     public void dispose() {
