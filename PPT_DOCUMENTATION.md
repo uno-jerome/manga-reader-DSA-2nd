@@ -1,7 +1,8 @@
 # Project PPT Documentation
 
 Project: Manga Reader Application  
-Language: Java (JavaFX), Maven, JDK 21  
+Language: Java (JavaFX), Maven  
+Java version: Currently JDK 17 in pom.xml; upgrade target JDK 21  
 Focus: Data Structures, Algorithms, Caching, Concurrency
 
 ---
@@ -37,6 +38,11 @@ Focus: Data Structures, Algorithms, Caching, Concurrency
   - Libraries: JavaFX, Jackson (JSON), Java Concurrency utils.
   - Files: `pom.xml`, data at `data/library.json`, cache at `cache/images/`.
 
+- Note on Java version: `pom.xml` sets `<maven.compiler.source>` and `<target>` to 17. When upgrading to JDK 21, update those to 21 and ensure your toolchain uses JDK 21.
+
+- Architecture (insert screenshot):
+  - ![Architecture Diagram](docs/images/architecture.png)
+
 ---
 
 ## 4. Data Structures Used
@@ -57,12 +63,12 @@ Focus: Data Structures, Algorithms, Caching, Concurrency
 - Justification: Amortized O(1) append; better cache locality than linked lists.
 
 4) LinkedBlockingQueue + ThreadPoolExecutor
-- Where: `ThreadPoolManager` (background image/tasks).
+- Where: `ThreadPoolManager.java` (background image/tasks).
 - Purpose: FIFO task scheduling; bounded queue protects memory.
 - Justification: Keeps UI responsive; backpressure under load.
 
 5) HashMap (UI node cache)
-- Where: View-level caches of JavaFX nodes (e.g., cover tiles) to avoid expensive recreation.
+- Where: View-level caches of JavaFX nodes (e.g., `AddSeriesView` cover tiles) to avoid expensive recreation.
 - Purpose: O(1) reuse of nodes by ID.
 - Justification: Drastically reduces repeated layout/render construction.
 
@@ -154,6 +160,8 @@ private String getCacheFileName(String url) {
 }
 ```
 
+- Thread pools (reference): see `src/main/java/com/mangareader/prototype/util/ThreadPoolManager.java` for configuration using `ThreadPoolExecutor` + `LinkedBlockingQueue` and a named `ThreadFactory` for debugging.
+
 ---
 
 ## 7. Testing and Results
@@ -174,8 +182,17 @@ private String getCacheFileName(String url) {
      - Expected: `isInLibrary(id)` O(1) true for existing, false otherwise.
      - Actual: Operations constant-time under concurrent access.
 
-- Screenshots
-  - Library grid, Manga detail, Reader view (captured during demo; attach to slides).
+- Screenshots (place your PNG/JPG files at `docs/images/` with these names):
+  - Library grid view: ![Library Grid](docs/images/library-grid.png)
+  - Manga detail view: ![Manga Detail](docs/images/manga-detail.png)
+  - Reader view: ![Reader View](docs/images/reader-view.png)
+  - Chapter filter demo: ![Chapter Filter](docs/images/chapter-filter.png)
+  - Cache benchmark (cold vs warm): ![Cache Benchmark](docs/images/cache-benchmark.png)
+
+- Assets to provide
+  - Preferred size: 1280×720 or 1600×900 for clarity.
+  - Naming: lowercase, hyphen-separated (as above) to avoid spaces.
+  - Keep sensitive info out of screenshots (usernames, paths, tokens).
 
 ---
 
