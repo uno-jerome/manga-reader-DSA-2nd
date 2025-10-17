@@ -208,8 +208,8 @@ private String getCacheFileName(String url) {
     - ![Add Series 0](docs/images/add-series-0.png)
     - ![Add Series 1](docs/images/add-series-1.png)
     - ![Add Series 2](docs/images/add-series-2.png)
+   - **View Series (modal):** ![View Series Modal](docs/images/view-series-modal.png)
   - **Manga detail view:** ![Manga Detail](docs/images/manga-detail.png)
-  - **View Series (modal):** ![View Series Modal](docs/images/view-series-modal.png)
   - **Reader view:** ![Reader View](docs/images/reader-view.png)
   - **Chapter filter demos:**
     - ![Chapter Filter 0](docs/images/chapter-filter-0.png)
