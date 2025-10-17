@@ -42,66 +42,7 @@ Focus: Data Structures, Algorithms, Caching, Concurrency
 
 - Note on Java version: `pom.xml` sets `<maven.compiler.source>` and `<target>` to 17. When upgrading to JDK 21, update those to 21 and ensure your toolchain uses JDK 21.
 
-- Architecture (insert screenshot):
-  - ![Architecture Diagram](docs/images/architecture.png)
-
-  Or view this built-in boxes-and-arrows diagram (renders on GitHub/VS Code):
-
-  ```mermaid
-  graph TD
-    %% UI Layer
-    subgraph UI[JavaFX UI]
-      LV[LibraryView]
-      MDV[MangaDetailView]
-      MRV[MangaReaderView]
-      LV --> MDV
-      MDV --> MRV
-    end
-
-    %% Services
-    LS[LibraryService]
-    MSI[MangaServiceImpl]
-    TPM[ThreadPoolManager]
-    IC[ImageCache<br/>Memory: ConcurrentHashMap]
-
-    %% Sources
-    subgraph Sources
-      S1[MangaDexSource]
-      S2[MgekoSource]
-    end
-
-    %% Persistence & Network
-    LIB[data/library.json<br/>Jackson]
-    DISK[cache/images<br/>Disk Cache]
-    NET[Network HTTP]
-
-    %% UI -> Services
-    LV --> LS
-    MDV --> LS
-    MRV --> LS
-    LV --> MSI
-    MDV --> MSI
-    MRV --> MSI
-
-    %% Library persistence
-    LS <--> LIB
-
-    %% Multi-source search/fetch
-    MSI --> S1
-    MSI --> S2
-
-    %% Image loading flow
-    MRV --> IC
-    IC -->|miss| DISK
-    DISK -->|hit| IC
-    DISK -->|miss| NET
-    NET --> IC
-    IC --> MRV
-
-    %% Concurrency
-    TPM --> MSI
-    TPM --> IC
-  ```
+  
 
 ---
 
@@ -246,7 +187,11 @@ private String getCacheFileName(String url) {
   - Library grid view: ![Library Grid](docs/images/library-grid.png)
   - Manga detail view: ![Manga Detail](docs/images/manga-detail.png)
   - Reader view: ![Reader View](docs/images/reader-view.png)
-  - Chapter filter demo: ![Chapter Filter](docs/images/chapter-filter.png)
+  - Chapter filter demos:
+    - ![Chapter Filter 0](docs/images/chapter-filter-0.png)
+    - ![Chapter Filter 1](docs/images/chapter-filter-1.png)
+    - ![Chapter Filter 2](docs/images/chapter-filter-2.png)
+    - ![Chapter Filter 3](docs/images/chapter-filter-3.png)
 
 
 - Assets to provide
