@@ -239,3 +239,19 @@ private String getCacheFileName(String url) {
   - Introduce rate limiting/retries per source; structured error handling.
   - Optional: full-text search index (inverted index) for faster multi-field queries.
   - Add automated unit/UI tests for library, caching, and search behaviors.
+
+---
+
+## 9. References
+
+Below are APA-style references for the major libraries, tools, and web APIs used by this project. If you want exact publication years or DOI information, supply the source and I will update the entries.
+
+- OpenJFX. (n.d.). OpenJFX 21.0.2 [Software]. Retrieved from https://openjfx.io/
+- FasterXML. (n.d.). Jackson Databind (version 2.16.1) [Software]. Retrieved from https://github.com/FasterXML/jackson-databind
+- jsoup. (n.d.). jsoup HTML parser (version 1.17.2) [Software]. Retrieved from https://jsoup.org/
+- The Apache Software Foundation. (n.d.). Apache HttpClient (version 5.3) [Software]. Retrieved from https://hc.apache.org/httpcomponents-client-5.3.x/
+- JUnit Team. (n.d.). JUnit 5 (version 5.10.1) [Software]. Retrieved from https://junit.org/junit5/
+- MangaDex. (n.d.). MangaDex API. Retrieved from https://api.mangadex.org
+- MgekoSource. (n.d.). Mgeko source implementation (local project source). See `src/main/java/com/mangareader/prototype/source/MgekoSource.java` in this repository.
+
+If you used any books, papers, or online articles while researching (for example, articles about caching strategies or concurrency patterns), tell me their titles/authors and I will add formal APA entries for them.
