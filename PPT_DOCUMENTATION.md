@@ -246,12 +246,12 @@ private String getCacheFileName(String url) {
 
 The following entries cite the exact libraries and web API used in this project, with versions matching `pom.xml` and links to their authoritative sources.
 
-- OpenJFX. (2024). OpenJFX (Version 21.0.2) [Computer software]. https://openjfx.io/
+- The Apache Software Foundation. (2023). Apache HttpClient (Version 5.3) [Computer software]. https://hc.apache.org/httpcomponents-client-5.3.x/
+- The Apache Software Foundation. (2023). Apache HttpCore (Version 5.3) [Computer software]. https://hc.apache.org/httpcomponents-core-5.3.x/
 - FasterXML. (2023, December 24). Jackson Databind (Version 2.16.1) [Computer software]. https://github.com/FasterXML/jackson-databind
 - FasterXML. (2023). Jackson Datatype: JSR-310 (Version 2.16.1) [Computer software]. https://github.com/FasterXML/jackson-modules-java8
 - Hedley, J. (2023, December 29). jsoup: Java HTML parser (Version 1.17.2) [Computer software]. https://jsoup.org/news/release-1.17.2
-- The Apache Software Foundation. (2023). Apache HttpClient (Version 5.3) [Computer software]. https://hc.apache.org/httpcomponents-client-5.3.x/
-- The Apache Software Foundation. (2023). Apache HttpCore (Version 5.3) [Computer software]. https://hc.apache.org/httpcomponents-core-5.3.x/
 - JUnit Team. (2023, November 6). JUnit 5 (Version 5.10.1) [Computer software]. https://junit.org/junit5/docs/5.10.1/release-notes/
 - MangaDex. (2025). MangaDex API documentation. https://api.mangadex.org/docs
+- OpenJFX. (2024). OpenJFX (Version 21.0.2) [Computer software]. https://openjfx.io/
 
